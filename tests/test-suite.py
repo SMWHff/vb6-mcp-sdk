@@ -14,7 +14,8 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from mcp.shared.exceptions import MCPError
 
-EXE = r"C:\Users\mengf\vb6-mcp-sdk\vb6-mcp-sdk.exe"
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+EXE = os.path.join(BASE_DIR, "vb6-mcp-sdk.exe")
 EXE_DIR = os.path.dirname(EXE)
 
 RESULTS = []
