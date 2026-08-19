@@ -45,12 +45,15 @@ rem ---------- 2) 部署：exe 检查 + 自动编译 + fix-console ----------
 set "EXE=%ROOT%vb6-mcp-sdk.exe"
 echo.
 echo [2/3] 检查可执行文件 vb6-mcp-sdk.exe ...
-rem ---- 查找 VB6 编译器（放 if 块外：块内出现 (x86) 半角括号会破坏括号块解析）----
+rem ---- 查找 VB6 编译器（优先用户目录可写副本；(x86) 目录用 8.3 短路径避免 cmd 括号块解析问题）----
 set "VB6="
 if defined VB6_PATH set "VB6=%VB6_PATH%\vb6.exe"
+if not defined VB6 if exist "%USERPROFILE%\VB6Expr\VB6.EXE" set "VB6=%USERPROFILE%\VB6Expr\VB6.EXE"
 if not defined VB6 for /f "skip=2 tokens=2,*" %%a in ('reg query "HKLM\SOFTWARE\WOW6432Node\Microsoft\VisualStudio\6.0\Setup" /v VB6Path 2^>nul') do set "VB6=%%b\vb6.exe"
-if not defined VB6 if exist "C:\Program Files (x86)\Microsoft Visual Studio\VB98\vb6.exe" set "VB6=C:\Program Files (x86)\Microsoft Visual Studio\VB98\vb6.exe"
-if not defined VB6 if exist "C:\Program Files\Microsoft Visual Studio\VB98\vb6.exe" set "VB6=C:\Program Files\Microsoft Visual Studio\VB98\vb6.exe"
+if not defined VB6 if exist "%ProgramFiles%\Microsoft Visual Studio\VB98\vb6.exe" set "VB6=%ProgramFiles%\Microsoft Visual Studio\VB98\vb6.exe"
+for %%d in ("%ProgramFiles(x86)%") do set "PF86=%%~sd"
+if not defined VB6 if exist "%PF86%\Microsoft Visual Studio\VB98\vb6.exe" set "VB6=%PF86%\Microsoft Visual Studio\VB98\vb6.exe"
+if not defined VB6 if exist "%PF86%\VB6Expr\VB6.EXE" set "VB6=%PF86%\VB6Expr\VB6.EXE"
 
 if not exist "%EXE%" (
     echo [部署] exe 不存在，尝试 VB6 命令行编译 ...
@@ -61,9 +64,15 @@ if not exist "%EXE%" (
         exit 2
     )
     echo [编译] 使用 %VB6%
-    "%VB6%" /make "%ROOT%vb6-mcp-sdk.vbp" /out "%EXE%" >nul 2>&1
+    rem 注意：VB6Expr 忽略 /out 参数，exe 按 vbp 的 ExeName32 输出到项目目录；start /wait 等待 GUI 程序
+    start /wait "" "%VB6%" /make "%ROOT%vb6-mcp-sdk.vbp"
     if not exist "%EXE%" (
         echo [错误] VB6 编译失败，请检查 vbp 工程后手动编译。
+        exit 2
+    )
+    findstr /b /m "MZ" "%EXE%" >nul 2>nul
+    if errorlevel 1 (
+        echo [错误] 编译产物异常（非有效 PE）。当前 VB6 可能不支持命令行编译，请手动编译后重跑。
         exit 2
     )
     echo [编译] 编译成功
