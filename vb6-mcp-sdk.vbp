@@ -1,5 +1,5 @@
 Type=Exe
-Module=entry; entry.bas
+Module=mcp_main; mcp_main.bas
 Module=mcp_json; sdk\mcp_json.bas
 Module=mcp_log; sdk\mcp_log.bas
 Module=mcp_transport_stdio; sdk\mcp_transport_stdio.bas

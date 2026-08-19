@@ -13,7 +13,7 @@
 ```text
 本框架 = 协议引擎（McpServer）+ 双传输（stdio/HTTP）+ 三大能力接口
 你写   = 工具类（Implements ITool）+ 提示词类（Implements IPrompt）
-        + 资源类（Implements IResource）+ 入口组装（entry.bas）
+        + 资源类（Implements IResource）+ 入口组装（mcp_main.bas）
 ```
 
 ## 特性
@@ -50,7 +50,7 @@ vb6-mcp-sdk\
 │   ├── ToolWordCount.cls       ← 示例工具：文本统计（演示 isError）
 │   ├── SamplePrompt.cls        ← 示例提示词（代码审查助手）
 │   └── SampleResource.cls      ← 示例资源（服务器信息）
-├── entry.bas                   ← 入口：创建 server、注册能力、启动
+├── mcp_main.bas                   ← 入口：创建 server、注册能力、启动
 ├── vb6-mcp-sdk.vbp              ← 工程文件（双击打开）
 ├── json-polyfill.js            ← 运行期依赖（必须与 exe 同目录）
 ├── README.md                   ← 中文文档
@@ -79,7 +79,7 @@ git clone git@github.com:SMWHff/vb6-mcp-sdk.git
 
 拿到源码后双击 `vb6-mcp-sdk.vbp` 即可在 VB6 IDE 中打开工程；「文件 → 生成 vb6-mcp-sdk.exe」编译出可执行文件（详见下方快速开始）。
 
-> 💡 本框架面向**二次开发**：你在 `tools/` 下写自己的能力类并注册进 `entry.bas`，再编译成你自己的 MCP server。仓库里的示例工具（算术/时间/读文件等）即开即用，可直接用来体验。
+> 💡 本框架面向**二次开发**：你在 `tools/` 下写自己的能力类并注册进 `mcp_main.bas`，再编译成你自己的 MCP server。仓库里的示例工具（算术/时间/读文件等）即开即用，可直接用来体验。
 
 ---
 
@@ -115,10 +115,10 @@ Private Function ITool_Execute(ByVal requestJson As String) As String
 End Function
 ```
 
-### 第 2 步：注册工具（改 entry.bas）
+### 第 2 步：注册工具（改 mcp_main.bas）
 
 ```vb
-' entry.bas 的 Main 里加一行：
+' mcp_main.bas 的 Main 里加一行：
 server.RegisterTool New ToolGreeting
 ```
 
@@ -216,7 +216,7 @@ End Function
 
 ---
 
-## 入口 entry.bas
+## 入口 mcp_main.bas
 
 ```vb
 Public Sub Main()
@@ -319,7 +319,7 @@ npx @modelcontextprotocol/inspector .\vb6-mcp-sdk.exe
 ```
 ┌──────────────────────────────────────────────────┐
 │ 你的代码（不改 SDK）                               │
-│  entry.bas → 注册能力 → RunStdio / RunHttp        │
+│  mcp_main.bas → 注册能力 → RunStdio / RunHttp        │
 │  工具类（Implements ITool）                       │
 │  提示词类（Implements IPrompt）                   │
 │  资源类（Implements IResource）                   │

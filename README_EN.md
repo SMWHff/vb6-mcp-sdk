@@ -13,7 +13,7 @@ An **MCP (Model Context Protocol) server development framework written in VB6 (3
 ```text
 Framework = protocol engine (McpServer) + dual transports (stdio/HTTP) + three capability interfaces
 You write = tool classes (Implements ITool) + prompt classes (Implements IPrompt)
-          + resource classes (Implements IResource) + entry assembly (entry.bas)
+          + resource classes (Implements IResource) + entry assembly (mcp_main.bas)
 ```
 
 ## Features
@@ -50,7 +50,7 @@ vb6-mcp-sdk\
 │   ├── ToolWordCount.cls       ← Example tool: text statistics (demonstrates isError)
 │   ├── SamplePrompt.cls        ← Example prompt (code review assistant)
 │   └── SampleResource.cls      ← Example resource (server info)
-├── entry.bas                   ← Entry point: create server, register capabilities, start
+├── mcp_main.bas                   ← Entry point: create server, register capabilities, start
 ├── vb6-mcp-sdk.vbp              ← Project file (double-click to open)
 ├── json-polyfill.js            ← Runtime dependency (must sit next to the exe)
 ├── README.md                   ← 中文文档
@@ -79,7 +79,7 @@ git clone git@github.com:SMWHff/vb6-mcp-sdk.git
 
 Double-click `vb6-mcp-sdk.vbp` to open the project in the VB6 IDE; use **File → Make vb6-mcp-sdk.exe** to build the executable (details in Quick Start below).
 
-> 💡 This framework is designed for **secondary development**: write your own capability classes under `tools/`, register them in `entry.bas`, and compile your own MCP server. The bundled example tools (arithmetic / time / file reading, etc.) work out of the box for a quick try.
+> 💡 This framework is designed for **secondary development**: write your own capability classes under `tools/`, register them in `mcp_main.bas`, and compile your own MCP server. The bundled example tools (arithmetic / time / file reading, etc.) work out of the box for a quick try.
 
 ---
 
@@ -115,10 +115,10 @@ Private Function ITool_Execute(ByVal requestJson As String) As String
 End Function
 ```
 
-### Step 2: Register the tool (edit entry.bas)
+### Step 2: Register the tool (edit mcp_main.bas)
 
 ```vb
-' Add one line inside Main in entry.bas:
+' Add one line inside Main in mcp_main.bas:
 server.RegisterTool New ToolGreeting
 ```
 
@@ -216,7 +216,7 @@ Reference implementations: `tools\SamplePrompt.cls` (code review assistant), `to
 
 ---
 
-## Entry Point: entry.bas
+## Entry Point: mcp_main.bas
 
 ```vb
 Public Sub Main()
@@ -319,7 +319,7 @@ npx @modelcontextprotocol/inspector .\vb6-mcp-sdk.exe
 ```
 ┌──────────────────────────────────────────────────┐
 │ Your code (SDK untouched)                         │
-│  entry.bas → register capabilities → RunStdio / RunHttp
+│  mcp_main.bas → register capabilities → RunStdio / RunHttp
 │  tool classes (Implements ITool)                  │
 │  prompt classes (Implements IPrompt)              │
 │  resource classes (Implements IResource)          │
