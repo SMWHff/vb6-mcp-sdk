@@ -55,8 +55,10 @@ vb6-mcp-sdk\
 ├── json-polyfill.js            ← Runtime dependency (must sit next to the exe)
 ├── README.md                   ← 中文文档
 ├── README_EN.md                ← English docs (this file)
-└── scripts\                    ← Build / test scripts
-    ├── fix-console.ps1         ← Must run after every compile (GUI→Console subsystem)
+├── run_test.bat                ← one-click test launcher (self-install deps / auto-deploy / run all tests)
+├── scripts\
+│   └── fix-console.ps1         ← Must run after every compile (GUI→Console subsystem)
+└── tests\
     ├── test.ps1                ← stdio smoke test
     ├── test-suite.py           ← ★ full stdio test suite (33 cases)
     ├── http-test.py            ← ★ HTTP transport tests (13 checks)
@@ -277,7 +279,7 @@ Once compiled, register the exe in any MCP client.
 - Client endpoint: `http://localhost:9000/mcp`
 - **CORS** supported — browser / web MCP clients can call it cross-origin
 - Transport is self-implemented with raw Winsock API; no third-party HTTP component
-- Use `scripts/client-sdk-http.py` (official Python SDK) for quick integration testing
+- Use `tests/client-sdk-http.py` (official Python SDK) for quick integration testing
 
 ---
 
@@ -285,20 +287,20 @@ Once compiled, register the exe in any MCP client.
 
 ```powershell
 # 1) Smoke test (stdio, 5 messages)
-pwsh .\scripts\test.ps1
+pwsh .\tests\test.ps1
 
 # 2) ★ Full test suite (stdio, 33 cases: handshake/tools/prompts/resources/security/raw protocol errors)
-uv run --with mcp python .\scripts\test-suite.py
+uv run --with mcp python .\tests\test-suite.py
 
 # 3) ★ HTTP transport tests (13 checks: CORS/202/404/OPTIONS/Chinese/missing args)
 #    Start first: .\vb6-mcp-sdk.exe /http:9002
-uv run python .\scripts\http-test.py http://localhost:9002/mcp
+uv run python .\tests\http-test.py http://localhost:9002/mcp
 
 # 4) Official Python SDK full handshake (stdio)
-uv run --with mcp python .\scripts\client-sdk.py
+uv run --with mcp python .\tests\client-sdk.py
 
 # 5) Official Python SDK over HTTP
-uv run --with mcp python .\scripts\client-sdk-http.py http://localhost:9000/mcp
+uv run --with mcp python .\tests\client-sdk-http.py http://localhost:9000/mcp
 
 # 6) Official Inspector (run in the project root)
 npx @modelcontextprotocol/inspector .\vb6-mcp-sdk.exe
@@ -373,7 +375,7 @@ Repository: [github.com/SMWHff/vb6-mcp-sdk](https://github.com/SMWHff/vb6-mcp-sd
 - **Tech stack**: VB6 (32-bit) + Win32 API + MSScriptControl (JSON parsing) — no third-party VB6 controls
 - **Contributing**:
   - Add example tools: implement `ITool` / `IPrompt` / `IResource`, follow the templates under `tools/`
-  - Fix bugs: make sure `scripts/test-suite.py` (33 cases) + `scripts/http-test.py` (13 checks) pass before submitting
+  - Fix bugs: make sure `tests/test-suite.py` (33 cases) + `tests/http-test.py` (13 checks) pass before submitting
   - Commit style: Conventional Commits (`feat(scope): description`)
 - **Testing**: full verification against the official Python SDK over both transports (stdio + Streamable HTTP) plus raw-protocol error cases (which catch what official clients miss)
 - **Related resources**: [MCP specification](https://modelcontextprotocol.io/) · [Python SDK](https://github.com/modelcontextprotocol/python-sdk) · [Inspector](https://github.com/modelcontextprotocol/inspector)

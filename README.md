@@ -55,8 +55,10 @@ vb6-mcp-sdk\
 ├── json-polyfill.js            ← 运行期依赖（必须与 exe 同目录）
 ├── README.md                   ← 中文文档
 ├── README_EN.md                ← English docs
-└── scripts\                    ← 构建 / 测试脚本
-    ├── fix-console.ps1         ← 编译后必跑（GUI→Console 子系统）
+├── run_test.bat                ← 一键测试启动器（自装依赖/自动部署/跑全部测试）
+├── scripts\                    ← 构建 / 部署脚本
+│   └── fix-console.ps1         ← 编译后必跑（GUI→Console 子系统）
+└── tests\                      ← 测试用例
     ├── test.ps1                ← stdio 冒烟测试
     ├── test-suite.py           ← ★ stdio 全面测试套件（33 用例）
     ├── http-test.py            ← ★ HTTP 传输层专项（13 项）
@@ -277,7 +279,7 @@ End Sub
 - 客户端接入端点：`http://localhost:9000/mcp`
 - 支持 **CORS**，浏览器/Web 端 MCP 客户端可直接跨域调用
 - 传输层为纯 Winsock API 自实现，无第三方 HTTP 组件
-- 结合 `scripts/client-sdk-http.py`（官方 Python SDK）可快速联调
+- 结合 `tests/client-sdk-http.py`（官方 Python SDK）可快速联调
 
 ---
 
@@ -285,20 +287,20 @@ End Sub
 
 ```powershell
 # 1) 冒烟测试（stdio，5 条消息）
-pwsh .\scripts\test.ps1
+pwsh .\tests\test.ps1
 
 # 2) ★ 全面测试套件（stdio，33 用例：握手/工具/提示词/资源/安全/裸协议错误）
-uv run --with mcp python .\scripts\test-suite.py
+uv run --with mcp python .\tests\test-suite.py
 
 # 3) ★ HTTP 传输层专项（13 项：CORS/202/404/OPTIONS/中文/缺参）
 #    先启动：.\vb6-mcp-sdk.exe /http:9002
-uv run python .\scripts\http-test.py http://localhost:9002/mcp
+uv run python .\tests\http-test.py http://localhost:9002/mcp
 
 # 4) 官方 Python SDK 完整握手（stdio）
-uv run --with mcp python .\scripts\client-sdk.py
+uv run --with mcp python .\tests\client-sdk.py
 
 # 5) 官方 Python SDK 走 HTTP
-uv run --with mcp python .\scripts\client-sdk-http.py http://localhost:9000/mcp
+uv run --with mcp python .\tests\client-sdk-http.py http://localhost:9000/mcp
 
 # 6) 官方 Inspector（在项目根目录执行）
 npx @modelcontextprotocol/inspector .\vb6-mcp-sdk.exe
@@ -373,7 +375,7 @@ npx @modelcontextprotocol/inspector .\vb6-mcp-sdk.exe
 - **技术栈**：VB6（32 位）+ Win32 API + MSScriptControl（JSON 解析）——无任何第三方 VB6 控件依赖
 - **贡献方式**：
   - 新增示例工具：实现 `ITool` / `IPrompt` / `IResource` 接口，参考 `tools/` 下的模板
-  - 修复 bug：跑通 `scripts/test-suite.py`（33 用例）+ `scripts/http-test.py`（13 项）后再提交
+  - 修复 bug：跑通 `tests/test-suite.py`（33 用例）+ `tests/http-test.py`（13 项）后再提交
   - 提交规范：Conventional Commits（`feat(scope): 描述`，描述用中文）
 - **测试**：官方 Python SDK（stdio + Streamable HTTP 双传输）全链路验证 + 裸协议错误用例（能抓到官方客户端测不出的问题）
 - **相关资源**：[MCP 官方规范](https://modelcontextprotocol.io/) · [Python SDK](https://github.com/modelcontextprotocol/python-sdk) · [Inspector 调试器](https://github.com/modelcontextprotocol/inspector)
