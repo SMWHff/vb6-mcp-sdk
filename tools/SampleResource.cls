@@ -31,7 +31,7 @@ Private Property Get IResource_ResourceDescription() As String
 End Property
 
 Private Function IResource_ReadResourceText(ByVal uri As String) As String
-    IResource_ReadResourceText = "服务器: vb6mcp-sdk-demo" & vbCrLf _
+    IResource_ReadResourceText = "服务器: vb6-mcp-sdk-demo" & vbCrLf _
         & "框架: VB6.0 MCP SDK 1.0.0" & vbCrLf _
         & "时间: " & Format$(Now, "yyyy-mm-dd hh:nn:ss") & vbCrLf _
         & "说明: 这是一个通过 IResource 接口动态生成的文本资源"

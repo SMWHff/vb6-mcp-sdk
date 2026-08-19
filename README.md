@@ -1,4 +1,4 @@
-# vb6mcp-sdk —— VB6.0 MCP Server 开发框架
+# vb6-mcp-sdk —— VB6.0 MCP Server 开发框架
 
 **中文** | [English](README_EN.md)
 
@@ -31,7 +31,7 @@
 ## 目录结构
 
 ```
-vb6mcp-sdk\
+vb6-mcp-sdk\
 ├── sdk\                        ← SDK 核心（复用，一般不需要改）
 │   ├── ITool.cls               ← 工具接口
 │   ├── IPrompt.cls             ← 提示词模板接口
@@ -51,7 +51,7 @@ vb6mcp-sdk\
 │   ├── SamplePrompt.cls        ← 示例提示词（代码审查助手）
 │   └── SampleResource.cls      ← 示例资源（服务器信息）
 ├── entry.bas                   ← 入口：创建 server、注册能力、启动
-├── vb6mcp-sdk.vbp              ← 工程文件（双击打开）
+├── vb6-mcp-sdk.vbp              ← 工程文件（双击打开）
 ├── json-polyfill.js            ← 运行期依赖（必须与 exe 同目录）
 ├── README.md                   ← 中文文档
 ├── README_EN.md                ← English docs
@@ -75,7 +75,7 @@ git clone git@github.com:SMWHff/vb6-mcp-sdk.git
 # 方式二：直接下载 ZIP（GitHub 页面 → Code → Download ZIP）
 ```
 
-拿到源码后双击 `vb6mcp-sdk.vbp` 即可在 VB6 IDE 中打开工程；「文件 → 生成 vb6mcp-sdk.exe」编译出可执行文件（详见下方快速开始）。
+拿到源码后双击 `vb6-mcp-sdk.vbp` 即可在 VB6 IDE 中打开工程；「文件 → 生成 vb6-mcp-sdk.exe」编译出可执行文件（详见下方快速开始）。
 
 > 💡 本框架面向**二次开发**：你在 `tools/` 下写自己的能力类并注册进 `entry.bas`，再编译成你自己的 MCP server。仓库里的示例工具（算术/时间/读文件等）即开即用，可直接用来体验。
 
@@ -122,11 +122,11 @@ server.RegisterTool New ToolGreeting
 
 ### 第 3 步：编译 + 启动
 
-1. 双击 `vb6mcp-sdk.vbp` → 「文件 → 生成 vb6mcp-sdk.exe」到项目根目录
+1. 双击 `vb6-mcp-sdk.vbp` → 「文件 → 生成 vb6-mcp-sdk.exe」到项目根目录
 2. `pwsh .\scripts\fix-console.ps1`（**每次重编译后必跑**）
 3. 启动：
    - stdio：被 MCP 客户端（Claude Desktop 等）拉起
-   - HTTP：`.\vb6mcp-sdk.exe /http`（端口 8080）或 `/http:9000`
+   - HTTP：`.\vb6-mcp-sdk.exe /http`（端口 8080）或 `/http:9000`
 
 完成。你的工具已经是一个标准的 MCP server。
 
@@ -251,14 +251,14 @@ End Sub
 ```json
 {
   "mcpServers": {
-    "vb6mcp-sdk": {
-      "command": "C:\\path\\to\\vb6mcp-sdk.exe"
+    "vb6-mcp-sdk": {
+      "command": "C:\\path\\to\\vb6-mcp-sdk.exe"
     }
   }
 }
 ```
 
-**Cursor**：`Settings → MCP → Add new MCP server`，Type 选 `command`，Command 填 exe 的完整路径（如 `C:\path\to\vb6mcp-sdk.exe`）。
+**Cursor**：`Settings → MCP → Add new MCP server`，Type 选 `command`，Command 填 exe 的完整路径（如 `C:\path\to\vb6-mcp-sdk.exe`）。
 
 > 📌 stdio 模式默认启动，无需任何参数；exe 被客户端拉起时自动走 stdin/stdout 分帧协议。
 
@@ -268,10 +268,10 @@ End Sub
 
 ```powershell
 # 默认端口 8080
-.\vb6mcp-sdk.exe /http
+.\vb6-mcp-sdk.exe /http
 
 # 指定端口
-.\vb6mcp-sdk.exe /http:9000
+.\vb6-mcp-sdk.exe /http:9000
 ```
 
 - 客户端接入端点：`http://localhost:9000/mcp`
@@ -291,7 +291,7 @@ pwsh .\scripts\test.ps1
 uv run --with mcp python .\scripts\test-suite.py
 
 # 3) ★ HTTP 传输层专项（13 项：CORS/202/404/OPTIONS/中文/缺参）
-#    先启动：.\vb6mcp-sdk.exe /http:9002
+#    先启动：.\vb6-mcp-sdk.exe /http:9002
 uv run python .\scripts\http-test.py http://localhost:9002/mcp
 
 # 4) 官方 Python SDK 完整握手（stdio）
@@ -301,7 +301,7 @@ uv run --with mcp python .\scripts\client-sdk.py
 uv run --with mcp python .\scripts\client-sdk-http.py http://localhost:9000/mcp
 
 # 6) 官方 Inspector（在项目根目录执行）
-npx @modelcontextprotocol/inspector .\vb6mcp-sdk.exe
+npx @modelcontextprotocol/inspector .\vb6-mcp-sdk.exe
 ```
 
 **测试套件覆盖**（`test-suite.py` 33 用例）：握手 4 · 工具 14（含负数/小数/特殊字符/10KB 长文本/未知工具/缺参/isError）· 提示词 3 · 资源 3 · 安全 3（路径穿越/绝对路径/非法扩展名）· 裸协议 6（非法 JSON/未知方法/通知无响应/字符串 id/数字 id/CRLF）。**裸协议用例能抓到官方 SDK 客户端测不出的问题**（如字符串 id 不带引号、`\uXXXX` 转义解析）——已两次真实发现并修复框架 bug。
@@ -360,7 +360,7 @@ npx @modelcontextprotocol/inspector .\vb6mcp-sdk.exe
 
 ## 与 vb6mcp（单体版）的关系
 
-`vb6mcp` 是这套框架的前身——把协议、传输、工具全写在一个 `mcp.bas` 里。`vb6mcp-sdk` 把它拆成了可复用的分层框架：**协议引擎与具体工具解耦，新增工具只需实现 ITool 并注册**。
+`vb6mcp` 是这套框架的前身——把协议、传输、工具全写在一个 `mcp.bas` 里。`vb6-mcp-sdk` 把它拆成了可复用的分层框架：**协议引擎与具体工具解耦，新增工具只需实现 ITool 并注册**。
 
 ---
 

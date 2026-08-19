@@ -1,4 +1,4 @@
-# client-sdk.py —— 官方 Python MCP SDK 加载 vb6mcp-sdk（stdio）并验证三大能力
+# client-sdk.py —— 官方 Python MCP SDK 加载 vb6-mcp-sdk（stdio）并验证三大能力
 # 用法：uv run --with mcp python scripts/client-sdk.py
 import asyncio
 import sys
@@ -8,7 +8,7 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-EXE = r"C:\Users\mengf\vb6mcp-sdk\vb6mcp-sdk.exe"
+EXE = r"C:\Users\mengf\vb6-mcp-sdk\vb6-mcp-sdk.exe"
 
 
 async def main():

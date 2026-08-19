@@ -32,7 +32,7 @@ Private Sub Class_Initialize()
     Set m_tools = New Collection
     Set m_prompts = New Collection
     Set m_resources = New Collection
-    m_serverName = "vb6mcp-sdk"
+    m_serverName = "vb6-mcp-sdk"
     m_serverVersion = "1.0.0"
 End Sub
 

@@ -1,10 +1,10 @@
-﻿# test.ps1 —— 冒烟测试：把 JSON-RPC 消息管道灌给 vb6mcp-sdk.exe 验证握手
+﻿# test.ps1 —— 冒烟测试：把 JSON-RPC 消息管道灌给 vb6-mcp-sdk.exe 验证握手
 # 用法：pwsh .\scripts\test.ps1   （要求先编译 + fix-console）
 $ErrorActionPreference = "Stop"
 
-$exe = Join-Path $PSScriptRoot "..\vb6mcp-sdk.exe"
+$exe = Join-Path $PSScriptRoot "..\vb6-mcp-sdk.exe"
 if (-not (Test-Path $exe)) {
-    Write-Host "未找到 vb6mcp-sdk.exe，请先编译（且运行 fix-console.ps1）。" -ForegroundColor Red
+    Write-Host "未找到 vb6-mcp-sdk.exe，请先编译（且运行 fix-console.ps1）。" -ForegroundColor Red
     exit 1
 }
 
@@ -28,7 +28,7 @@ if (-not ($output -match '"text":"5"')) {
 } elseif (-not ($output -match '"text":"hello sdk"')) {
     Write-Host "失败：echo 未原样返回文本" -ForegroundColor Red
     $fail = 1
-} elseif (-not ($output -match 'vb6mcp-sdk-demo')) {
+} elseif (-not ($output -match 'vb6-mcp-sdk-demo')) {
     Write-Host "注意：initialize 未返回自定义服务器名（不阻塞，仅提示）" -ForegroundColor Yellow
 }
 

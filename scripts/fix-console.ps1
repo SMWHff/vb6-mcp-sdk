@@ -1,12 +1,12 @@
-﻿# fix-console.ps1 —— 把 vb6mcp-sdk.exe 从 GUI 子系统改为控制台子系统
+﻿# fix-console.ps1 —— 把 vb6-mcp-sdk.exe 从 GUI 子系统改为控制台子系统
 # 为什么：PowerShell 管道无法与 GUI 子系统（subsystem=2）程序交换 stdio；
 #         改成控制台子系统（subsystem=3）后，pwsh 管道与 MCP 客户端都能正常通信。
 # 用法：每次重新编译后运行一次：pwsh .\scripts\fix-console.ps1
 $ErrorActionPreference = "Stop"
 
-$exe = Join-Path $PSScriptRoot "..\vb6mcp-sdk.exe"
+$exe = Join-Path $PSScriptRoot "..\vb6-mcp-sdk.exe"
 if (-not (Test-Path $exe)) {
-    Write-Host "未找到 vb6mcp-sdk.exe，请先编译。" -ForegroundColor Red
+    Write-Host "未找到 vb6-mcp-sdk.exe，请先编译。" -ForegroundColor Red
     exit 1
 }
 
@@ -33,7 +33,7 @@ $b[$subOff + 1] = 0
 $b2 = [IO.File]::ReadAllBytes($exe)
 $v = [BitConverter]::ToUInt16($b2, $subOff)
 if ($v -eq 3) {
-    Write-Host "已将 vb6mcp-sdk.exe 从 GUI(2) 改为 Console(3)。" -ForegroundColor Green
+    Write-Host "已将 vb6-mcp-sdk.exe 从 GUI(2) 改为 Console(3)。" -ForegroundColor Green
 } else {
     Write-Host "修改失败：子系统 = $v" -ForegroundColor Red
     exit 1

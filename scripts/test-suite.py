@@ -1,6 +1,6 @@
-﻿# test-suite.py —— vb6mcp-sdk 全面测试套件（官方 SDK + 裸 stdio 协议错误）
+﻿# test-suite.py —— vb6-mcp-sdk 全面测试套件（官方 SDK + 裸 stdio 协议错误）
 # 用法：uv run --with mcp python scripts/test-suite.py
-# 前置：已编译 vb6mcp-sdk.exe 且跑过 fix-console.ps1（GUI 子系统下裸管道读不到输出）
+# 前置：已编译 vb6-mcp-sdk.exe 且跑过 fix-console.ps1（GUI 子系统下裸管道读不到输出）
 import asyncio
 import json
 import os
@@ -14,7 +14,7 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from mcp.shared.exceptions import MCPError
 
-EXE = r"C:\Users\mengf\vb6mcp-sdk\vb6mcp-sdk.exe"
+EXE = r"C:\Users\mengf\vb6-mcp-sdk\vb6-mcp-sdk.exe"
 EXE_DIR = os.path.dirname(EXE)
 
 RESULTS = []
@@ -35,7 +35,7 @@ async def sdk_session_cases():
             record("握手", "initialize 协议版本 2024-11-05",
                    init.protocol_version == "2024-11-05", init.protocol_version)
             record("握手", "serverInfo 名称与版本",
-                   init.server_info.name == "vb6mcp-sdk-demo" and init.server_info.version == "1.0.0",
+                   init.server_info.name == "vb6-mcp-sdk-demo" and init.server_info.version == "1.0.0",
                    f"{init.server_info.name} {init.server_info.version}")
             caps = init.capabilities
             record("握手", "capabilities 含三大能力",
@@ -71,7 +71,7 @@ async def sdk_session_cases():
             r = await session.call_tool("sys_info", {})
             record("工具", "sys_info 含机器名", "机器名" in r.content[0].text, r.content[0].text.splitlines()[0])
             r = await session.call_tool("read_file", {"path": "README.md"})
-            record("工具", "read_file 读 README.md", "# vb6mcp-sdk" in r.content[0].text,
+            record("工具", "read_file 读 README.md", "# vb6-mcp-sdk" in r.content[0].text,
                    r.content[0].text.splitlines()[0][:30])
             r = await session.call_tool("word_count", {"text": "你好 MCP SDK\n第二行"})
             txt = r.content[0].text
@@ -110,7 +110,7 @@ async def sdk_session_cases():
                    any(rr.uri == "demo://server/info" for rr in resources.resources),
                    [rr.uri for rr in resources.resources])
             rr = await session.read_resource("demo://server/info")
-            record("资源", "resources/read 返回内容", "vb6mcp-sdk-demo" in rr.contents[0].text,
+            record("资源", "resources/read 返回内容", "vb6-mcp-sdk-demo" in rr.contents[0].text,
                    rr.contents[0].text.splitlines()[0])
             try:
                 await session.read_resource("demo://no/such")

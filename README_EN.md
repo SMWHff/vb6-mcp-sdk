@@ -1,4 +1,4 @@
-# vb6mcp-sdk — VB6.0 MCP Server Development Framework
+# vb6-mcp-sdk — VB6.0 MCP Server Development Framework
 
 [中文](README.md) | **English**
 
@@ -31,7 +31,7 @@ You write = tool classes (Implements ITool) + prompt classes (Implements IPrompt
 ## Directory Structure
 
 ```
-vb6mcp-sdk\
+vb6-mcp-sdk\
 ├── sdk\                        ← SDK core (reuse, usually no changes needed)
 │   ├── ITool.cls               ← Tool interface
 │   ├── IPrompt.cls             ← Prompt template interface
@@ -51,7 +51,7 @@ vb6mcp-sdk\
 │   ├── SamplePrompt.cls        ← Example prompt (code review assistant)
 │   └── SampleResource.cls      ← Example resource (server info)
 ├── entry.bas                   ← Entry point: create server, register capabilities, start
-├── vb6mcp-sdk.vbp              ← Project file (double-click to open)
+├── vb6-mcp-sdk.vbp              ← Project file (double-click to open)
 ├── json-polyfill.js            ← Runtime dependency (must sit next to the exe)
 ├── README.md                   ← 中文文档
 ├── README_EN.md                ← English docs (this file)
@@ -75,7 +75,7 @@ git clone git@github.com:SMWHff/vb6-mcp-sdk.git
 # Option 2: download the ZIP (GitHub page → Code → Download ZIP)
 ```
 
-Double-click `vb6mcp-sdk.vbp` to open the project in the VB6 IDE; use **File → Make vb6mcp-sdk.exe** to build the executable (details in Quick Start below).
+Double-click `vb6-mcp-sdk.vbp` to open the project in the VB6 IDE; use **File → Make vb6-mcp-sdk.exe** to build the executable (details in Quick Start below).
 
 > 💡 This framework is designed for **secondary development**: write your own capability classes under `tools/`, register them in `entry.bas`, and compile your own MCP server. The bundled example tools (arithmetic / time / file reading, etc.) work out of the box for a quick try.
 
@@ -122,11 +122,11 @@ server.RegisterTool New ToolGreeting
 
 ### Step 3: Compile & start
 
-1. Double-click `vb6mcp-sdk.vbp` → **File → Make vb6mcp-sdk.exe** into the project root
+1. Double-click `vb6-mcp-sdk.vbp` → **File → Make vb6-mcp-sdk.exe** into the project root
 2. `pwsh .\scripts\fix-console.ps1` (**required after every recompile**)
 3. Start:
    - stdio: spawned by an MCP client (Claude Desktop, etc.)
-   - HTTP: `.\vb6mcp-sdk.exe /http` (port 8080) or `/http:9000`
+   - HTTP: `.\vb6-mcp-sdk.exe /http` (port 8080) or `/http:9000`
 
 Done. Your tool is now a standard MCP server.
 
@@ -251,14 +251,14 @@ Once compiled, register the exe in any MCP client.
 ```json
 {
   "mcpServers": {
-    "vb6mcp-sdk": {
-      "command": "C:\\path\\to\\vb6mcp-sdk.exe"
+    "vb6-mcp-sdk": {
+      "command": "C:\\path\\to\\vb6-mcp-sdk.exe"
     }
   }
 }
 ```
 
-**Cursor**: `Settings → MCP → Add new MCP server`, Type `command`, Command = the full path to the exe (e.g. `C:\path\to\vb6mcp-sdk.exe`).
+**Cursor**: `Settings → MCP → Add new MCP server`, Type `command`, Command = the full path to the exe (e.g. `C:\path\to\vb6-mcp-sdk.exe`).
 
 > 📌 stdio mode starts by default and needs no arguments; the exe automatically speaks the stdin/stdout framed protocol when spawned by a client.
 
@@ -268,10 +268,10 @@ Once compiled, register the exe in any MCP client.
 
 ```powershell
 # Default port 8080
-.\vb6mcp-sdk.exe /http
+.\vb6-mcp-sdk.exe /http
 
 # Custom port
-.\vb6mcp-sdk.exe /http:9000
+.\vb6-mcp-sdk.exe /http:9000
 ```
 
 - Client endpoint: `http://localhost:9000/mcp`
@@ -291,7 +291,7 @@ pwsh .\scripts\test.ps1
 uv run --with mcp python .\scripts\test-suite.py
 
 # 3) ★ HTTP transport tests (13 checks: CORS/202/404/OPTIONS/Chinese/missing args)
-#    Start first: .\vb6mcp-sdk.exe /http:9002
+#    Start first: .\vb6-mcp-sdk.exe /http:9002
 uv run python .\scripts\http-test.py http://localhost:9002/mcp
 
 # 4) Official Python SDK full handshake (stdio)
@@ -301,7 +301,7 @@ uv run --with mcp python .\scripts\client-sdk.py
 uv run --with mcp python .\scripts\client-sdk-http.py http://localhost:9000/mcp
 
 # 6) Official Inspector (run in the project root)
-npx @modelcontextprotocol/inspector .\vb6mcp-sdk.exe
+npx @modelcontextprotocol/inspector .\vb6-mcp-sdk.exe
 ```
 
 **Test suite coverage** (`test-suite.py`, 33 cases): handshake 4 · tools 14 (negative numbers / decimals / special characters / 10KB long text / unknown tool / missing args / isError) · prompts 3 · resources 3 · security 3 (path traversal / absolute path / illegal extension) · raw protocol 6 (invalid JSON / unknown method / notification without response / string id / numeric id / CRLF). **The raw-protocol cases catch bugs the official SDK client cannot** (e.g. string ids without quotes, `\uXXXX` escape parsing) — they have already surfaced and fixed framework bugs twice.
@@ -360,7 +360,7 @@ npx @modelcontextprotocol/inspector .\vb6mcp-sdk.exe
 
 ## Relationship with vb6mcp (Monolithic Version)
 
-`vb6mcp` is the predecessor of this framework — protocol, transports, and tools were all crammed into a single `mcp.bas`. `vb6mcp-sdk` refactors it into a reusable layered framework: **the protocol engine is decoupled from concrete tools; adding a tool only requires implementing ITool and registering it**.
+`vb6mcp` is the predecessor of this framework — protocol, transports, and tools were all crammed into a single `mcp.bas`. `vb6-mcp-sdk` refactors it into a reusable layered framework: **the protocol engine is decoupled from concrete tools; adding a tool only requires implementing ITool and registering it**.
 
 ---
 

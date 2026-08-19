@@ -1,5 +1,5 @@
-﻿# client-sdk-http.py —— 官方 Python SDK 通过 Streamable HTTP 连接 vb6mcp-sdk
-# 前置：先启动 .\vb6mcp-sdk.exe /http:9000
+﻿# client-sdk-http.py —— 官方 Python SDK 通过 Streamable HTTP 连接 vb6-mcp-sdk
+# 前置：先启动 .\vb6-mcp-sdk.exe /http:9000
 # 用法：uv run --with mcp python scripts/client-sdk-http.py [URL]
 import asyncio
 import sys

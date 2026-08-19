@@ -1,5 +1,5 @@
-﻿# http-test.py —— vb6mcp-sdk Streamable HTTP 传输层专项测试
-# 用法：先启动 .\vb6mcp-sdk.exe /http:9002
+﻿# http-test.py —— vb6-mcp-sdk Streamable HTTP 传输层专项测试
+# 用法：先启动 .\vb6-mcp-sdk.exe /http:9002
 #       uv run python scripts/http-test.py [URL]
 # 覆盖：POST /mcp、OPTIONS 预检+CORS、GET 健康检查、404、202 通知、
 #       非法 JSON、Content-Type/Length 头、中文 UTF-8
