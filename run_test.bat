@@ -21,6 +21,17 @@ rem ---------- 0) 定位 PowerShell 执行器（优先 pwsh 7，否则 powershel
 set "PS=powershell -NoProfile -ExecutionPolicy Bypass"
 where pwsh >nul 2>nul && set "PS=pwsh -NoProfile -ExecutionPolicy Bypass"
 
+rem ---------- 0.5) 日志：自我 tee（输出同时进控制台与 logs 日志文件） ----------
+for /f "delims=" %%i in ('%PS% -NoProfile -Command Get-Date -Format yyyyMMdd_HHmmss') do set "TS=%%i"
+set "LOG=%ROOT%logs\run_test_%TS%.log"
+if not exist "%ROOT%logs" mkdir "%ROOT%logs"
+if "%TEE_DONE%"=="1" goto :tee_done
+set "TEE_DONE=1"
+%PS% -NoProfile -Command "[Console]::OutputEncoding=[Text.Encoding]::UTF8; cmd /c '%~f0' 2>&1 | ForEach-Object { Write-Output $_; $_ | Out-File -Append -Encoding utf8 '%LOG%' }; exit $LASTEXITCODE"
+exit /b %ERRORLEVEL%
+:tee_done
+echo [日志] 本次完整输出已记录到：%LOG%
+
 echo ============================================================
 echo  vb6-mcp-sdk 一键测试  ^| 工作目录：%ROOT%
 echo ============================================================
