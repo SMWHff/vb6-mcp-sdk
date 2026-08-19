@@ -1,12 +1,28 @@
 # vb6mcp-sdk —— VB6.0 MCP Server 开发框架
 
+![License](https://img.shields.io/badge/license-MIT-blue)
+![Language](https://img.shields.io/badge/language-VB6%20(32--bit)-brightgreen)
+![Platform](https://img.shields.io/badge/platform-Windows-0078d6)
+![Protocol](https://img.shields.io/badge/MCP-2024--11--05-purple)
+![Transport](https://img.shields.io/badge/transport-stdio%20%2F%20Streamable%20HTTP-orange)
+
 一个用 **VB6（32 位）** 编写的 MCP（Model Context Protocol）服务器开发框架。封装了协议处理（JSON-RPC 2.0）、双传输（stdio / Streamable HTTP）、JSON 解析、UTF-8 编解码、日志，覆盖 **MCP 三大能力（Tools / Prompts / Resources）**——**你只需要实现接口、注册进去，就是一个可用的 MCP server**。
 
-```dsh-ui-doc
+```text
 本框架 = 协议引擎（McpServer）+ 双传输（stdio/HTTP）+ 三大能力接口
-你写 = 工具类（Implements ITool）+ 提示词类（Implements IPrompt）
-      + 资源类（Implements IResource）+ 入口组装（entry.bas）
+你写   = 工具类（Implements ITool）+ 提示词类（Implements IPrompt）
+        + 资源类（Implements IResource）+ 入口组装（entry.bas）
 ```
+
+## 特性
+
+- 🧩 **协议引擎**：完整 JSON-RPC 2.0 + MCP 生命周期（initialize / notifications / ping），兼容 2024-11-05 及 2025 系列客户端
+- 🔌 **双传输**：stdio（被 Claude Desktop / Cursor 等拉起）与 Streamable HTTP（Winsock 自实现，零第三方依赖）
+- 🧰 **三大能力**：Tools / Prompts / Resources 全覆盖，实现接口 + 注册即用
+- 🔤 **中文友好**：UTF-8 全链路编解码，工具名用 ASCII、描述与结果可中文
+- 🛡️ **错误语义**：工具抛错自动转 `isError` 结果、缺参自动校验（-32602），AI 端可见错误文本
+- 📦 **零依赖**：仅 VB6 + Win32 API + MSScriptControl，无任何第三方 VB6 控件
+- 🧪 **可测试**：33 用例 stdio 测试套件 + 13 项 HTTP 专项，官方 Python SDK 双传输验证
 
 ---
 
@@ -36,10 +52,29 @@ vb6mcp-sdk\
 ├── vb6mcp-sdk.vbp              ← 工程文件（双击打开）
 ├── json-polyfill.js            ← 运行期依赖（必须与 exe 同目录）
 ├── README.md
-└── scripts\
+└── scripts\                    ← 构建 / 测试脚本
     ├── fix-console.ps1         ← 编译后必跑（GUI→Console 子系统）
-    └── test.ps1                ← 冒烟测试
+    ├── test.ps1                ← stdio 冒烟测试
+    ├── test-suite.py           ← ★ stdio 全面测试套件（33 用例）
+    ├── http-test.py            ← ★ HTTP 传输层专项（13 项）
+    ├── client-sdk.py           ← 官方 Python SDK 握手（stdio）
+    └── client-sdk-http.py      ← 官方 Python SDK 走 HTTP
 ```
+
+---
+
+## 安装与获取
+
+```bash
+# 方式一：git clone
+git clone git@github.com:SMWHff/vb6-mcp-sdk.git
+
+# 方式二：直接下载 ZIP（GitHub 页面 → Code → Download ZIP）
+```
+
+拿到源码后双击 `vb6mcp-sdk.vbp` 即可在 VB6 IDE 中打开工程；「文件 → 生成 vb6mcp-sdk.exe」编译出可执行文件（详见下方快速开始）。
+
+> 💡 本框架面向**二次开发**：你在 `tools/` 下写自己的能力类并注册进 `entry.bas`，再编译成你自己的 MCP server。仓库里的示例工具（算术/时间/读文件等）即开即用，可直接用来体验。
 
 ---
 
@@ -75,10 +110,10 @@ Private Function ITool_Execute(ByVal requestJson As String) As String
 End Function
 ```
 
-### 第 2 步：注册工具（改 app.bas）
+### 第 2 步：注册工具（改 entry.bas）
 
 ```vb
-' app.bas 的 Main 里加一行：
+' entry.bas 的 Main 里加一行：
 server.RegisterTool New ToolGreeting
 ```
 
@@ -204,6 +239,45 @@ End Sub
 
 ---
 
+## 与 MCP 客户端集成（stdio）
+
+编译出 exe 后，把它注册到任意 MCP 客户端即可。
+
+**Claude Desktop**（Windows，配置文件 `%APPDATA%\Claude\claude_desktop_config.json`）：
+
+```json
+{
+  "mcpServers": {
+    "vb6mcp-sdk": {
+      "command": "C:\\path\\to\\vb6mcp-sdk.exe"
+    }
+  }
+}
+```
+
+**Cursor**：`Settings → MCP → Add new MCP server`，Type 选 `command`，Command 填 exe 的完整路径（如 `C:\path\to\vb6mcp-sdk.exe`）。
+
+> 📌 stdio 模式默认启动，无需任何参数；exe 被客户端拉起时自动走 stdin/stdout 分帧协议。
+
+---
+
+## HTTP 传输模式（Streamable HTTP）
+
+```powershell
+# 默认端口 8080
+.\vb6mcp-sdk.exe /http
+
+# 指定端口
+.\vb6mcp-sdk.exe /http:9000
+```
+
+- 客户端接入端点：`http://localhost:9000/mcp`
+- 支持 **CORS**，浏览器/Web 端 MCP 客户端可直接跨域调用
+- 传输层为纯 Winsock API 自实现，无第三方 HTTP 组件
+- 结合 `scripts/client-sdk-http.py`（官方 Python SDK）可快速联调
+
+---
+
 ## 验证
 
 ```powershell
@@ -223,8 +297,8 @@ uv run --with mcp python .\scripts\client-sdk.py
 # 5) 官方 Python SDK 走 HTTP
 uv run --with mcp python .\scripts\client-sdk-http.py http://localhost:9000/mcp
 
-# 6) 官方 Inspector
-npx @modelcontextprotocol/inspector C:\Users\mengf\vb6mcp-sdk\vb6mcp-sdk.exe
+# 6) 官方 Inspector（在项目根目录执行）
+npx @modelcontextprotocol/inspector .\vb6mcp-sdk.exe
 ```
 
 **测试套件覆盖**（`test-suite.py` 33 用例）：握手 4 · 工具 14（含负数/小数/特殊字符/10KB 长文本/未知工具/缺参/isError）· 提示词 3 · 资源 3 · 安全 3（路径穿越/绝对路径/非法扩展名）· 裸协议 6（非法 JSON/未知方法/通知无响应/字符串 id/数字 id/CRLF）。**裸协议用例能抓到官方 SDK 客户端测不出的问题**（如字符串 id 不带引号、`\uXXXX` 转义解析）——已两次真实发现并修复框架 bug。
@@ -283,11 +357,13 @@ npx @modelcontextprotocol/inspector C:\Users\mengf\vb6mcp-sdk\vb6mcp-sdk.exe
 
 ## 与 vb6mcp（单体版）的关系
 
-`vb6mcp`（`C:\Users\mengf\vb6mcp\`）是这套框架的前身——把协议、传输、工具全写在一个 `mcp.bas` 里。`vb6mcp-sdk` 把它拆成了可复用的分层框架：**协议引擎与具体工具解耦，新增工具只需实现 ITool 并注册**。
+`vb6mcp` 是这套框架的前身——把协议、传输、工具全写在一个 `mcp.bas` 里。`vb6mcp-sdk` 把它拆成了可复用的分层框架：**协议引擎与具体工具解耦，新增工具只需实现 ITool 并注册**。
 
 ---
 
 ## 开源与贡献
+
+仓库：[github.com/SMWHff/vb6-mcp-sdk](https://github.com/SMWHff/vb6-mcp-sdk) —— 觉得有用的话欢迎 ⭐ Star、提 [Issue](https://github.com/SMWHff/vb6-mcp-sdk/issues) 或发 [PR](https://github.com/SMWHff/vb6-mcp-sdk/pulls)。
 
 - **许可证**：MIT（见 `LICENSE`）
 - **版本**：1.0.0（协议 2024-11-05，兼容 2025-03-26 / 2025-06-18 客户端）
@@ -297,3 +373,4 @@ npx @modelcontextprotocol/inspector C:\Users\mengf\vb6mcp-sdk\vb6mcp-sdk.exe
   - 修复 bug：跑通 `scripts/test-suite.py`（33 用例）+ `scripts/http-test.py`（13 项）后再提交
   - 提交规范：Conventional Commits（`feat(scope): 描述`，描述用中文）
 - **测试**：官方 Python SDK（stdio + Streamable HTTP 双传输）全链路验证 + 裸协议错误用例（能抓到官方客户端测不出的问题）
+- **相关资源**：[MCP 官方规范](https://modelcontextprotocol.io/) · [Python SDK](https://github.com/modelcontextprotocol/python-sdk) · [Inspector 调试器](https://github.com/modelcontextprotocol/inspector)
