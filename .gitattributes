@@ -1,0 +1,10 @@
+# VB6 IDE 需要 CRLF 换行（LF 会导致模块加载异常）
+*.bas text eol=crlf
+*.cls text eol=crlf
+*.vbp text eol=crlf
+*.frm text eol=crlf
+*.js text eol=crlf
+*.ps1 text eol=crlf
+*.md text eol=crlf
+*.py text eol=crlf
+*.txt text eol=crlf
