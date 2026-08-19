@@ -23,7 +23,7 @@ You write = tool classes (Implements ITool) + prompt classes (Implements IPrompt
 - 🧰 **Three capabilities**: Tools / Prompts / Resources fully supported — implement an interface, register it, done
 - 🔤 **Chinese-friendly**: UTF-8 end-to-end encoding; ASCII tool names with Chinese descriptions and results
 - 🛡️ **Error semantics**: tool errors automatically become `isError` results; missing required arguments are validated automatically (-32602) so the AI client sees readable error text
-- 📦 **Zero dependencies**: VB6 + Win32 API + MSScriptControl only, no third-party VB6 controls
+- 📦 **Zero dependencies**: VB6 + Win32 API + VBJSON (pure VB6 JSON library) only, no third-party VB6 controls
 - 🧪 **Testable**: 33-case stdio test suite + 13 HTTP-specific checks, verified against the official Python SDK over both transports
 
 ---
@@ -39,7 +39,8 @@ vb6-mcp-sdk\
 │   ├── McpServer.cls           ← Server class: register/dispatch the three capabilities, start transports
 │   ├── mcp_transport_stdio.bas ← stdio transport (kernel32 framing + UTF-8)
 │   ├── mcp_transport_http.bas  ← Streamable HTTP transport (Winsock API)
-│   ├── mcp_json.bas            ← JSON utilities (JsonInit/JsonGet/JsonQuote)
+│   ├── mcp_json.bas            ← JSON utilities (pure VB6, based on VBJSON)
+│   ├── json\                   ← VBJSON library (JSON.bas + cStringBuilder.cls)
 │   └── mcp_log.bas             ← Logging (logs\mcp.log)
 ├── tools\                      ← Put your capabilities here (with examples)
 │   ├── ToolAdd.cls             ← Example tool: arithmetic
@@ -52,7 +53,6 @@ vb6-mcp-sdk\
 │   └── SampleResource.cls      ← Example resource (server info)
 ├── mcp_main.bas                   ← Entry point: create server, register capabilities, start
 ├── vb6-mcp-sdk.vbp              ← Project file (double-click to open)
-├── json-polyfill.js            ← Runtime dependency (must sit next to the exe)
 ├── README.md                   ← 中文文档
 ├── README_EN.md                ← English docs (this file)
 ├── run_test.bat                ← one-click launcher (auto-compile VB6 / self-install deps / full tests / logs in logs\)
@@ -334,7 +334,7 @@ npx @modelcontextprotocol/inspector .\vb6-mcp-sdk.exe
 │ mcp_transport_   │ mcp_transport_http.bas         │
 │ stdio.bas        │ (Winsock API)                  │
 ├──────────────────┴───────────────────────────────┤
-│ mcp_json.bas (JsonGet/JsonQuote)                  │
+│ mcp_json.bas (VBJSON pure-VB6 parsing)             │
 │ mcp_transport_stdio.bas (Utf8Encode/Decode)       │
 │ mcp_log.bas                                       │
 └──────────────────────────────────────────────────┘
@@ -345,8 +345,7 @@ npx @modelcontextprotocol/inspector .\vb6-mcp-sdk.exe
 ## Requirements & Dependencies
 
 - VB6 IDE (32-bit compilation)
-- 64-bit systems: `regsvr32 C:\Windows\SysWOW64\msscript.ocx` (as administrator, MSScriptControl)
-- `json-polyfill.js` must sit next to the exe (read at runtime; keep pure ASCII, do not change encoding)
+- JSON parsing uses a pure-VB6 library (VBJSON, `sdk/json/`) — **no MSScriptControl / msscript.ocx registration, no runtime-side files**
 
 ---
 
@@ -357,8 +356,9 @@ npx @modelcontextprotocol/inspector .\vb6-mcp-sdk.exe
 | Compile error 「JsonInit 未定义」 | Module not in project / .bas has LF line endings | Double-click .vbp to load; convert all files to CRLF |
 | Compile error 「缺少标识符」 | API declaration parameter collides with a keyword (`len`) | Rename to `buflen`; avoid len/name/type/error |
 | Compile error 「XX 未定义」 (cross-module) | `Private Declare` not visible across modules | Use `Public Declare` when called from other modules |
-| Runtime error 62 (input past end of file) | Text-mode `Input$(LOF(f))` reading CRLF | Read the polyfill in binary mode |
-| All tool calls return 438 | late binding into JS nested objects | Use `JsonGet` to fetch scalars on the JS side |
+| First message returns Parse error | Client (e.g. .NET StreamWriter) prepends a UTF-8 BOM | `JsonGet` strips U+FEFF before parsing |
+| Runtime error 450 (object into Variant) | VB6 Learning Edition (VB6Expr) rejects object-to-Variant assignment | Traverse the tree with `Set` pointers only; read leaves straight from `Item()` |
+| Compile error 「无效限定符」 | Function uses VB6-sensitive names like `step`/`cur` | Rename (e.g. `j`/`curVal`); avoid keywords/built-ins |
 | No output in pwsh pipeline | exe is a GUI subsystem | Run `fix-console.ps1` |
 | All HTTP requests return 404 | Header extraction took only the first line / 0-byte placeholder pollution | Slice `sepPos+4` for the full header; track length with `accLen` |
 
@@ -376,7 +376,7 @@ Repository: [github.com/SMWHff/vb6-mcp-sdk](https://github.com/SMWHff/vb6-mcp-sd
 
 - **License**: MIT (see `LICENSE`)
 - **Version**: 1.0.0 (protocol 2024-11-05; compatible with 2025-03-26 / 2025-06-18 clients)
-- **Tech stack**: VB6 (32-bit) + Win32 API + MSScriptControl (JSON parsing) — no third-party VB6 controls
+- **Tech stack**: VB6 (32-bit) + Win32 API + VBJSON (pure-VB6 JSON library) — no third-party VB6 controls
 - **Contributing**:
   - Add example tools: implement `ITool` / `IPrompt` / `IResource`, follow the templates under `tools/`
   - Fix bugs: make sure `tests/test-suite.py` (33 cases) + `tests/http-test.py` (13 checks) pass before submitting

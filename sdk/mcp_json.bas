@@ -1,44 +1,80 @@
 ' ============================================================
-' mcp_json.bas —— SDK JSON 工具（MSScriptControl + polyfill）
-' 注意1：polyfill 用二进制模式读取——文本模式 Input$ + LOF 遇 CRLF 会抛
-'        「错误 62 输入超出文件尾」；二进制模式对 CRLF/LF 通吃。
-' 注意2：所有取值用 JsonGet 在 JS 表达式里取【标量】——VB6 late binding
-'        访问 ScriptControl 返回对象的嵌套属性会抛「错误 438」。
-' 要求：json-polyfill.js 与 exe 同目录（App.Path 定位）
+' mcp_json.bas -- SDK JSON utilities (pure VB6 via VBJSON)
+' Replaces the old MSScriptControl + json-polyfill.js approach.
+' JSON tree: object -> Scripting.Dictionary, array -> Collection
+' (1-based Collection index; add 1 when mapping from JSON 0-based)
+' NOTE: the VB6 Learning Edition runtime raises error 450 when an
+' object is assigned into a Variant, so traversal uses only Set
+' (object pointers) and reads leaves straight from Item().
 ' ============================================================
 Option Explicit
 
-Private m_sc As Object
+Private m_cachedJson As String
+Private m_cachedObj As Object
 
-' 初始化 JScript 引擎并注入 JSON.parse polyfill（幂等，可重复调用）
+' Kept for compatibility with McpServer startup (VBJSON needs none)
 Public Sub JsonInit()
-    Set m_sc = CreateObject("MSScriptControl.ScriptControl")
-    m_sc.Language = "JScript"
-    m_sc.AllowUI = False
-    m_sc.UseSafeSubset = True
-
-    Dim f As Integer, n As Long
-    f = FreeFile
-    Open App.Path & "\json-polyfill.js" For Binary As #f
-    n = LOF(f)
-    Dim buf() As Byte
-    If n > 0 Then
-        ReDim buf(0 To n - 1)
-        Get #f, , buf
-    End If
-    Close #f
-    If n <= 0 Then Err.Raise 53
-
-    m_sc.AddCode Utf8Decode(buf, n)
 End Sub
 
-' 在 JS 表达式里解析 JSON 并取 path 指向的值（返回标量；取不到返回 Empty）
-' 例：JsonGet(json, ".params.arguments.a")
-Public Function JsonGet(ByVal json As String, ByVal path As String) As Variant
-    JsonGet = m_sc.Eval("JSON.parse(" & JsonQuote(json) & ")" & path)
+' Strip UTF-8 BOM (U+FEFF) at message start (some clients like .NET prepend it)
+Private Function StripBom(ByVal s As String) As String
+    If LenB(s) > 0 And Left$(s, 1) = ChrW(&HFEFF) Then s = Mid$(s, 2)
+    StripBom = s
 End Function
 
-' VB6 字符串 -> JS 字符串字面量（双引号包裹 + 完整转义；先 \ 后 "）
+' Parse JSON and fetch the value at a dot path, e.g. ".params.arguments.a"
+' Returns a scalar (String/Long/Double/Boolean) or Empty when the path is missing.
+' Raises an error when the JSON itself is invalid (caller maps it to -32700).
+Public Function JsonGet(ByVal json As String, ByVal path As String) As Variant
+    On Error GoTo ErrHandler
+    Dim obj As Object
+    Set obj = ParseCached(json)
+    If obj Is Nothing Then Err.Raise vbObjectError + 1, , "Invalid JSON"
+    Dim parts() As String, j As Long
+    parts = Split(path, ".")
+    Dim node As Object
+    Set node = obj
+    For j = 1 To UBound(parts)
+        If Len(parts(j)) = 0 Then Exit For
+        Dim d As Scripting.Dictionary
+        Dim c As Collection
+        If TypeName(node) = "Dictionary" Then
+            Set d = node
+            If Not d.Exists(parts(j)) Then
+                JsonGet = Empty
+                Exit Function
+            End If
+            If TypeName(d.Item(parts(j))) = "Dictionary" Or TypeName(d.Item(parts(j))) = "Collection" Then
+                Set node = d.Item(parts(j))
+            Else
+                JsonGet = d.Item(parts(j))
+                Exit Function
+            End If
+        ElseIf TypeName(node) = "Collection" Then
+            Set c = node
+            On Error GoTo NotFound
+            If TypeName(c.Item(CLng(parts(j)) + 1)) = "Dictionary" Or TypeName(c.Item(CLng(parts(j)) + 1)) = "Collection" Then
+                Set node = c.Item(CLng(parts(j)) + 1)
+            Else
+                JsonGet = c.Item(CLng(parts(j)) + 1)
+                Exit Function
+            End If
+            On Error GoTo 0
+        Else
+            JsonGet = Empty
+            Exit Function
+        End If
+    Next j
+    JsonGet = Empty
+    Exit Function
+NotFound:
+    JsonGet = Empty
+    Exit Function
+ErrHandler:
+    Err.Raise Err.Number
+End Function
+
+' VB6 string -> JSON string literal (quoted + escaped)
 Public Function JsonQuote(ByVal s As String) As String
     s = Replace(s, "\", "\\")
     s = Replace(s, """", "\""")
@@ -50,13 +86,46 @@ Public Function JsonQuote(ByVal s As String) As String
     JsonQuote = """" & s & """"
 End Function
 
-' 校验请求的 arguments 是否包含 schema 声明的全部必需参数
-' 返回：缺失的参数名（| 分隔）；空字符串 = 校验通过
+' Check request arguments against the schema "required" list.
+' Returns missing names joined by "|", or "" when all are present.
 Public Function JsonCheckRequired(ByVal schemaJson As String, ByVal requestJson As String) As String
-    Dim expr As String
-    expr = "(function(){var req=JSON.parse(" & JsonQuote(requestJson) & ").params.arguments||{};" _
-        & "var s=JSON.parse(" & JsonQuote(schemaJson) & ");var r=s.required||[];var m=[];" _
-        & "for(var i=0;i<r.length;i++){if(typeof req[r[i]]==='undefined')m.push(r[i]);}" _
-        & "return m.join('|');})()"
-    JsonCheckRequired = CStr(m_sc.Eval(expr))
+    On Error GoTo Done
+    Dim req As Scripting.Dictionary, s As Scripting.Dictionary
+    Dim argsDict As Scripting.Dictionary, reqColl As Collection
+    Dim rItem As Variant, missing As String
+    Set req = ParseCached(StripBom(requestJson))
+    Set s = ParseCached(StripBom(schemaJson))
+    If req Is Nothing Or s Is Nothing Then GoTo Done
+    Set argsDict = Nothing
+    If req.Exists("params") Then
+        If req.Item("params").Exists("arguments") Then
+            Set argsDict = req.Item("params").Item("arguments")
+        End If
+    End If
+    If Not s.Exists("required") Then GoTo Done
+    Set reqColl = s.Item("required")
+    For Each rItem In reqColl
+        If argsDict Is Nothing Or Not argsDict.Exists(CStr(rItem)) Then
+            If Len(missing) > 0 Then missing = missing & "|"
+            missing = missing & CStr(rItem)
+        End If
+    Next rItem
+    JsonCheckRequired = missing
+    Exit Function
+Done:
+    JsonCheckRequired = ""
+End Function
+
+' Parse with per-message cache (HandleMessage + tool Execute share the same JSON text)
+Private Function ParseCached(ByVal s As String) As Object
+    s = StripBom(s)
+    If s = m_cachedJson Then
+        Set ParseCached = m_cachedObj
+    Else
+        Set m_cachedObj = Nothing
+        Set m_cachedObj = JSON.parse(s)
+        If Len(JSON.GetParserErrors()) > 0 Then Set m_cachedObj = Nothing
+        m_cachedJson = s
+        Set ParseCached = m_cachedObj
+    End If
 End Function

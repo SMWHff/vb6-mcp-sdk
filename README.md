@@ -23,7 +23,7 @@
 - 🧰 **三大能力**：Tools / Prompts / Resources 全覆盖，实现接口 + 注册即用
 - 🔤 **中文友好**：UTF-8 全链路编解码，工具名用 ASCII、描述与结果可中文
 - 🛡️ **错误语义**：工具抛错自动转 `isError` 结果、缺参自动校验（-32602），AI 端可见错误文本
-- 📦 **零依赖**：仅 VB6 + Win32 API + MSScriptControl，无任何第三方 VB6 控件
+- 📦 **零依赖**：仅 VB6 + Win32 API + 纯 VB6 JSON 库（VBJSON），无任何第三方 VB6 控件
 - 🧪 **可测试**：33 用例 stdio 测试套件 + 13 项 HTTP 专项，官方 Python SDK 双传输验证
 
 ---
@@ -39,7 +39,8 @@ vb6-mcp-sdk\
 │   ├── McpServer.cls           ← 服务器类：注册/分派三大能力、双传输启动
 │   ├── mcp_transport_stdio.bas ← stdio 传输层（kernel32 分帧 + UTF-8）
 │   ├── mcp_transport_http.bas  ← Streamable HTTP 传输层（Winsock API）
-│   ├── mcp_json.bas            ← JSON 工具（JsonInit/JsonGet/JsonQuote）
+│   ├── mcp_json.bas            ← JSON 工具（纯 VB6，基于 VBJSON）
+│   ├── json\                   ← VBJSON 库（JSON.bas + cStringBuilder.cls）
 │   └── mcp_log.bas             ← 日志（logs\mcp.log）
 ├── tools\                      ← 你的能力放这里（含示例）
 │   ├── ToolAdd.cls             ← 示例工具：算术
@@ -52,7 +53,6 @@ vb6-mcp-sdk\
 │   └── SampleResource.cls      ← 示例资源（服务器信息）
 ├── mcp_main.bas                   ← 入口：创建 server、注册能力、启动
 ├── vb6-mcp-sdk.vbp              ← 工程文件（双击打开）
-├── json-polyfill.js            ← 运行期依赖（必须与 exe 同目录）
 ├── README.md                   ← 中文文档
 ├── README_EN.md                ← English docs
 ├── run_test.bat                ← 一键测试启动器（自动编译 VB6 / 自装依赖 / 全量测试 / 日志输出 logs\）
@@ -334,7 +334,7 @@ npx @modelcontextprotocol/inspector .\vb6-mcp-sdk.exe
 │ mcp_transport_   │ mcp_transport_http.bas        │
 │ stdio.bas        │ （Winsock API）                │
 ├──────────────────┴───────────────────────────────┤
-│ mcp_json.bas（JsonGet/JsonQuote）                 │
+│ mcp_json.bas（VBJSON 纯 VB6 解析）                  │
 │ mcp_transport_stdio.bas（Utf8Encode/Decode）      │
 │ mcp_log.bas                                       │
 └──────────────────────────────────────────────────┘
@@ -345,8 +345,7 @@ npx @modelcontextprotocol/inspector .\vb6-mcp-sdk.exe
 ## 环境要求与依赖
 
 - VB6 IDE（32 位编译）
-- 64 位系统：`regsvr32 C:\Windows\SysWOW64\msscript.ocx`（管理员，MSScriptControl）
-- `json-polyfill.js` 必须与 exe 同目录（运行期读取，纯 ASCII 勿改编码）
+- JSON 解析采用纯 VB6 库（VBJSON，`sdk/json/`），**无需 MSScriptControl / msscript.ocx 注册，无运行期附加文件**
 
 ---
 
@@ -357,8 +356,9 @@ npx @modelcontextprotocol/inspector .\vb6-mcp-sdk.exe
 | 编译报「JsonInit 未定义」 | 模块未进工程 / .bas 是 LF 换行 | 双击 .vbp 加载；全部文件转 CRLF |
 | 编译报「缺少标识符」 | API 声明参数名撞关键字（`len`） | 改名 `buflen`，勿用 len/name/type/error |
 | 编译报「XX 未定义」（跨模块） | Private Declare 跨模块不可见 | 被其他模块调用时用 `Public Declare` |
-| 运行时错误 62 输入超出文件尾 | 文本模式 `Input$(LOF(f))` 读 CRLF | 二进制模式读取 polyfill |
-| 工具调用全部 438 | late binding 访问 JS 嵌套对象 | 用 `JsonGet` 在 JS 侧取标量 |
+| 首条消息 Parse error | 客户端（.NET StreamWriter 等）在消息前带 UTF-8 BOM | `JsonGet` 解析前自动剥离 U+FEFF |
+| 运行时错误 450（对象→Variant） | VB6 学习版（VB6Expr）不支持对象赋值进 Variant | 遍历解析树只用 `Set` 对象指针，叶子直接取 `Item()` |
+| 编译错「无效限定符」 | 函数内用 `step`/`cur` 等 VB6 敏感标识 | 改名（如 `j`/`curVal`），勿用关键字或内置名 |
 | pwsh 管道无输出 | exe 是 GUI 子系统 | 跑 `fix-console.ps1` |
 | HTTP 请求全部 404 | 请求头截取只取第一行 / 占位 0 字节污染 | 截 `sepPos+4` 完整头；用 `accLen` 跟踪长度 |
 
@@ -376,7 +376,7 @@ npx @modelcontextprotocol/inspector .\vb6-mcp-sdk.exe
 
 - **许可证**：MIT（见 `LICENSE`）
 - **版本**：1.0.0（协议 2024-11-05，兼容 2025-03-26 / 2025-06-18 客户端）
-- **技术栈**：VB6（32 位）+ Win32 API + MSScriptControl（JSON 解析）——无任何第三方 VB6 控件依赖
+- **技术栈**：VB6（32 位）+ Win32 API + VBJSON（纯 VB6 JSON 库）——无任何第三方 VB6 控件依赖
 - **贡献方式**：
   - 新增示例工具：实现 `ITool` / `IPrompt` / `IResource` 接口，参考 `tools/` 下的模板
   - 修复 bug：跑通 `tests/test-suite.py`（33 用例）+ `tests/http-test.py`（13 项）后再提交

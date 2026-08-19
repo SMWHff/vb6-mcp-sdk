@@ -1,5 +1,7 @@
 Type=Exe
+Reference=*\G{420B2830-E718-11CF-893D-00A0C9054228}#1.0#0#..\..\..\..\Windows\SysWOW64\scrrun.dll#Microsoft Scripting Runtime
 Module=mcp_main; mcp_main.bas
+Module=JSON; sdk\json\JSON.bas
 Module=mcp_json; sdk\mcp_json.bas
 Module=mcp_log; sdk\mcp_log.bas
 Module=mcp_transport_stdio; sdk\mcp_transport_stdio.bas
@@ -16,6 +18,7 @@ Class=SampleResource; tools\SampleResource.cls
 Class=ToolSysInfo; tools\ToolSysInfo.cls
 Class=ToolReadFile; tools\ToolReadFile.cls
 Class=ToolWordCount; tools\ToolWordCount.cls
+Class=cStringBuilder; sdk\json\cStringBuilder.cls
 Startup="Sub Main"
 ExeName32="vb6-mcp-sdk.exe"
 Command32=""
