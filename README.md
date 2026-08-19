@@ -55,7 +55,7 @@ vb6-mcp-sdk\
 ├── json-polyfill.js            ← 运行期依赖（必须与 exe 同目录）
 ├── README.md                   ← 中文文档
 ├── README_EN.md                ← English docs
-├── run_test.bat                ← 一键测试启动器（自装依赖/自动部署/跑全部测试）
+├── run_test.bat                ← 一键测试启动器（自动编译 VB6 / 自装依赖 / 全量测试 / 日志输出 logs\）
 ├── scripts\                    ← 构建 / 部署脚本
 │   └── fix-console.ps1         ← 编译后必跑（GUI→Console 子系统）
 └── tests\                      ← 测试用例
@@ -284,6 +284,10 @@ End Sub
 ---
 
 ## 验证
+
+**一键运行**：`.\run_test.bat` —— 自动检查/安装 uv、exe 缺失时自动调用 VB6 编译、跑 fix-console、执行全部 5 组测试；完整输出同时显示在控制台并记录到 `logs\run_test_*.log`。退出码：0=全部通过 / 1=有失败 / 2=环境未就绪。
+
+也可以单独执行各测试：
 
 ```powershell
 # 1) 冒烟测试（stdio，5 条消息）

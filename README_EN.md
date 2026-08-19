@@ -55,7 +55,7 @@ vb6-mcp-sdk\
 ├── json-polyfill.js            ← Runtime dependency (must sit next to the exe)
 ├── README.md                   ← 中文文档
 ├── README_EN.md                ← English docs (this file)
-├── run_test.bat                ← one-click test launcher (self-install deps / auto-deploy / run all tests)
+├── run_test.bat                ← one-click launcher (auto-compile VB6 / self-install deps / full tests / logs in logs\)
 ├── scripts\
 │   └── fix-console.ps1         ← Must run after every compile (GUI→Console subsystem)
 └── tests\
@@ -284,6 +284,10 @@ Once compiled, register the exe in any MCP client.
 ---
 
 ## Verification & Testing
+
+**One-click**: `.\run_test.bat` — auto-checks/installs uv, auto-compiles with VB6 when the exe is missing, runs fix-console, then executes all 5 test groups; the full output goes to the console and a `logs\run_test_*.log` file at the same time. Exit codes: 0=all passed / 1=failures / 2=environment not ready.
+
+Or run each test individually:
 
 ```powershell
 # 1) Smoke test (stdio, 5 messages)
