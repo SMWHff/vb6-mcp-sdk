@@ -1,0 +1,19 @@
+# 编译产物
+*.exe
+*.dll
+
+# VB6 工作区与备份
+*.vbw
+*.vbp.bak
+
+# 运行日志（SDK 运行时生成）
+logs/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# 编辑器
+.vscode/
+.idea/
