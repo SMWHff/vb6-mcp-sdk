@@ -39,7 +39,7 @@ vb6-mcp-sdk\
 │   ├── McpServer.cls           ← Server class: register/dispatch the three capabilities, start transports
 │   ├── mcp_transport_stdio.bas ← stdio transport (kernel32 framing + UTF-8)
 │   ├── mcp_transport_http.bas  ← Streamable HTTP transport (Winsock API)
-│   ├── mcp_json.bas            ← JSON utilities (pure VB6, based on VBJSON)
+│   ├── mcp_json.bas            ← JSON utilities (JsonGet/JsonQuote/JsonBuild, pure VB6 VBJSON)
 │   ├── json\                   ← VBJSON library (JSON.bas + cStringBuilder.cls)
 │   └── mcp_log.bas             ← Logging (logs\mcp.log)
 ├── tools\                      ← Put your capabilities here (with examples)

@@ -1,11 +1,12 @@
+Attribute VB_Name = "mcp_main"
 ' ============================================================
 ' mcp_main.bas —— SDK 使用示例：组装入口
 ' 你的 MCP server 只需要改这里：
 '   1) 注册你的工具（实现 ITool 接口的类）
 '   2) （可选）SetServerInfo 设置服务器标识
 ' 启动：
-'   vb6-mcp-sdk.exe          -> stdio 传输（默认）
-'   vb6-mcp-sdk.exe /http    -> Streamable HTTP（端口 8080）
+'   vb6-mcp-sdk.exe            -> stdio 传输（默认）
+'   vb6-mcp-sdk.exe /http      -> Streamable HTTP（端口 8080）
 '   vb6-mcp-sdk.exe /http:9000 -> Streamable HTTP（端口 9000）
 ' ============================================================
 Option Explicit

@@ -39,7 +39,7 @@ vb6-mcp-sdk\
 │   ├── McpServer.cls           ← 服务器类：注册/分派三大能力、双传输启动
 │   ├── mcp_transport_stdio.bas ← stdio 传输层（kernel32 分帧 + UTF-8）
 │   ├── mcp_transport_http.bas  ← Streamable HTTP 传输层（Winsock API）
-│   ├── mcp_json.bas            ← JSON 工具（纯 VB6，基于 VBJSON）
+│   ├── mcp_json.bas            ← JSON 工具（JsonGet/JsonQuote/JsonBuild，纯 VB6 VBJSON）
 │   ├── json\                   ← VBJSON 库（JSON.bas + cStringBuilder.cls）
 │   └── mcp_log.bas             ← 日志（logs\mcp.log）
 ├── tools\                      ← 你的能力放这里（含示例）

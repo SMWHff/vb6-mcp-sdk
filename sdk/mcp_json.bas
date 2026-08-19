@@ -85,6 +85,55 @@ Public Function JsonQuote(ByVal s As String) As String
     s = Replace(s, ChrW(&H2029), "\u2029")
     JsonQuote = """" & s & """"
 End Function
+' Build a JSON object string from key/value pairs:
+'   JsonBuild("name", "vb6", "count", 3, "ok", True)
+'   -> {"name":"vb6","count":3,"ok":true}
+' Value handling:
+'   String        -> quoted + escaped (unless it starts with { or [ -> embedded as nested JSON)
+'   Long/Integer/Byte/Single/Double/Currency -> raw number (comma decimal -> dot)
+'   Boolean       -> true / false
+'   Null / Empty  -> null
+'   Date          -> quoted "yyyy-mm-dd hh:nn:ss"
+'   other         -> quoted CStr
+Public Function JsonBuild(ParamArray kv() As Variant) As String
+    Dim parts As String
+    parts = ""
+    Dim i As Long
+    For i = 0 To UBound(kv) Step 2
+        If i + 1 <= UBound(kv) Then
+            If Len(parts) > 0 Then parts = parts & ","
+            parts = parts & JsonQuote(CStr(kv(i))) & ":" & JsonBuildValue(kv(i + 1))
+        End If
+    Next i
+    JsonBuild = "{" & parts & "}"
+End Function
+
+Private Function JsonBuildValue(ByVal v As Variant) As String
+    Dim t As Integer
+    t = VarType(v)
+    Select Case t
+        Case vbString
+            Dim sv As String
+            sv = CStr(v)
+            Dim h As String
+            h = LTrim$(sv)
+            If Left$(h, 1) = "{" Or Left$(h, 1) = "[" Then
+                JsonBuildValue = sv
+            Else
+                JsonBuildValue = JsonQuote(sv)
+            End If
+        Case vbLong, vbInteger, vbByte, vbSingle, vbDouble, vbCurrency
+            JsonBuildValue = Replace$(CStr(v), ",", ".")
+        Case vbBoolean
+            If v Then JsonBuildValue = "true" Else JsonBuildValue = "false"
+        Case vbNull, vbEmpty
+            JsonBuildValue = "null"
+        Case vbDate
+            JsonBuildValue = JsonQuote(Format$(v, "yyyy-mm-dd hh:nn:ss"))
+        Case Else
+            JsonBuildValue = JsonQuote(CStr(v))
+    End Select
+End Function
 
 ' Check request arguments against the schema "required" list.
 ' Returns missing names joined by "|", or "" when all are present.
