@@ -1,5 +1,7 @@
 # vb6mcp-sdk —— VB6.0 MCP Server 开发框架
 
+**中文** | [English](README_EN.md)
+
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Language](https://img.shields.io/badge/language-VB6%20(32--bit)-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-Windows-0078d6)
@@ -51,7 +53,8 @@ vb6mcp-sdk\
 ├── entry.bas                   ← 入口：创建 server、注册能力、启动
 ├── vb6mcp-sdk.vbp              ← 工程文件（双击打开）
 ├── json-polyfill.js            ← 运行期依赖（必须与 exe 同目录）
-├── README.md
+├── README.md                   ← 中文文档
+├── README_EN.md                ← English docs
 └── scripts\                    ← 构建 / 测试脚本
     ├── fix-console.ps1         ← 编译后必跑（GUI→Console 子系统）
     ├── test.ps1                ← stdio 冒烟测试
