@@ -66,7 +66,7 @@ vb6-mcp-sdk\
 ├── scripts\
 │   └── fix-console.ps1         ← Must run after every compile (GUI→Console subsystem)
 └── tests\
-    ├── test.ps1                ← stdio smoke test
+    ├── test.ps1                ← stdio smoke test (10 messages / 13 structured assertions)
     ├── test-suite.py           ← ★ full stdio test suite (85 cases)
     ├── http-test.py            ← ★ HTTP transport tests (33 checks)
     ├── coverage.py             ← ★ black-box coverage (tools/prompts/resources/templates/methods)

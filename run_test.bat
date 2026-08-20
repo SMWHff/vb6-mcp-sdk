@@ -103,7 +103,7 @@ echo ============================================================
 
 rem ---- 测试 1：stdio 冒烟 ----
 echo.
-echo ----- [1/5] 冒烟测试（stdio，5 条消息）-----
+echo ----- [1/5] 冒烟测试（stdio，10 条消息 / 13 项断言）-----
 %PS% -File "%ROOT%tests\test.ps1"
 if errorlevel 1 (echo [结果] 冒烟测试：失败 & set /a TFAIL+=1) else (echo [结果] 冒烟测试：通过 & set /a TPASS+=1)
 

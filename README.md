@@ -68,7 +68,7 @@ vb6-mcp-sdk\
 │   ├── fix-vb6ext.ps1          ← 修复 VB6「不能 VB6EXT.OLB 注册」弹窗
 │   └── utf8-to-gbk.ps1         ← VB6 源码 UTF-8（含 BOM）转 GBK，防中文乱码
 └── tests\                      ← 测试用例
-    ├── test.ps1                ← stdio 冒烟测试
+    ├── test.ps1                ← stdio 冒烟测试（10 条消息 / 13 项结构化断言）
     ├── test-suite.py           ← ★ stdio 全面测试套件（85 用例）
     ├── http-test.py            ← ★ HTTP 传输层专项（33 项：会话/边界/三能力全链路/SSE）
     ├── coverage.py             ← ★ 测试用例覆盖率自动统计（工具/提示词/资源/模板/协议方法）
@@ -305,7 +305,7 @@ End Sub
 也可以单独执行各测试：
 
 ```powershell
-# 1) 冒烟测试（stdio，5 条消息）
+# 1) 冒烟测试（stdio，10 条消息 / 13 项断言：握手/ping/tools/prompts/resources/错误码/中文）
 pwsh .\tests\test.ps1
 
 # 2) ★ 全面测试套件（stdio，85 用例：握手/工具/提示词/资源/模板/安全/裸协议/边界/数据完整性/MES/协议扩展/健壮性）
