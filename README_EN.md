@@ -287,7 +287,7 @@ Once compiled, register the exe in any MCP client.
 
 ## Verification & Testing
 
-**One-click**: `.\run_test.bat` — auto-checks/installs uv, auto-compiles with VB6 when the exe is missing, runs fix-console, then executes all 5 test groups; the full output goes to the console and a `logs\run_test_*.log` file at the same time. Exit codes: 0=all passed / 1=failures / 2=environment not ready.
+**One-click**: `.\run_test.bat` — auto-checks/installs uv, auto-compiles with VB6 when the exe is missing, runs fix-console, then executes all 5 test groups, and **finally prints a test-coverage report automatically** (`tests/coverage.py` measures coverage of tools/prompts/resources/templates/protocol methods); the full output goes to the console and a `logs\run_test_*.log` file at the same time. Exit codes: 0=all passed / 1=failures / 2=environment not ready.
 
 Or run each test individually:
 
