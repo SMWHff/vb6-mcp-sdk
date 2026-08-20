@@ -67,8 +67,8 @@ vb6-mcp-sdk\
 │   └── fix-console.ps1         ← Must run after every compile (GUI→Console subsystem)
 └── tests\
     ├── test.ps1                ← stdio smoke test
-    ├── test-suite.py           ← ★ full stdio test suite (75 cases)
-    ├── http-test.py            ← ★ HTTP transport tests (31 checks)
+    ├── test-suite.py           ← ★ full stdio test suite (85 cases)
+    ├── http-test.py            ← ★ HTTP transport tests (33 checks)
     ├── coverage.py             ← ★ black-box coverage (tools/prompts/resources/templates/methods)
     ├── coverage-whitebox.py    ← ★ white-box coverage (VB6 source procedure-level call-graph, self-written code only; VBJSON third-party lib excluded)
     ├── client-sdk.py           ← official Python SDK handshake (stdio)
@@ -303,10 +303,10 @@ Or run each test individually:
 # 1) Smoke test (stdio, 5 messages)
 pwsh .\tests\test.ps1
 
-# 2) ★ Full test suite (stdio, 75 cases: handshake/tools/prompts/resources/security/raw protocol errors)
+# 2) ★ Full test suite (stdio, 85 cases: handshake/tools/prompts/resources/security/raw protocol errors/robustness)
 uv run --with mcp python .\tests\test-suite.py
 
-# 3) ★ HTTP transport tests (31 checks: CORS/202/404/OPTIONS/Chinese/missing args/GET-SSE)
+# 3) ★ HTTP transport tests (33 checks: CORS/202/404/OPTIONS/Chinese/missing args/GET-SSE/session reuse)
 #    Start first: .\vb6-mcp-sdk.exe /http:9002
 uv run python .\tests\http-test.py http://localhost:9002/mcp
 
@@ -320,7 +320,7 @@ uv run --with mcp python .\tests\client-sdk-http.py http://localhost:9000/mcp
 npx @modelcontextprotocol/inspector .\vb6-mcp-sdk.exe
 ```
 
-**Test suite coverage** (`test-suite.py`, 75 cases): handshake 5 (incl. capabilities subscribe/logging/completions) · tools 37 (negative numbers / decimals / special characters / 10KB long text / unknown tool / missing args / isError / data integrity / 4 MES cases / 2 structuredContent cases) · prompts 5 · resources 6 · security 3 (path traversal / absolute path / illegal extension) · raw protocol 19 (invalid JSON / unknown method / notification without response / string id / numeric id / CRLF / completion / logging / subscribe). **The raw-protocol cases catch bugs the official SDK client cannot** (e.g. string ids without quotes, `\uXXXX` escape parsing) — they have already surfaced and fixed framework bugs twice. MES cases depend on the intranet server 192.168.20.151 (see the tutorial doc); they fail when it is unreachable.
+**Test suite coverage** (`test-suite.py`, 85 cases): handshake 5 (incl. capabilities subscribe/logging/completions) · tools 37 (negative numbers / decimals / special characters / 10KB long text / unknown tool / missing args / isError / data integrity / 4 MES cases / 2 structuredContent cases) · prompts 5 · resources 6 · security 3 (path traversal / absolute path / illegal extension) · raw protocol 29 (invalid JSON / unknown method / notification without response / id types / CRLF / completion / logging / subscribe / error recovery / version-negotiation edges / cursor / initialize tolerance). **The raw-protocol cases catch bugs the official SDK client cannot** (e.g. string ids without quotes, `\uXXXX` escape parsing) — they have already surfaced and fixed framework bugs twice. MES cases depend on the intranet server 192.168.20.151 (see the tutorial doc); they fail when it is unreachable.
 
 ---
 

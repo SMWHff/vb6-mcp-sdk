@@ -109,6 +109,13 @@ def main():
     status, _, body = post("/mcp", json.dumps({"jsonrpc": "2.0", "id": 11, "method": "ping"}),
                            {"Mcp-Session-Id": sess})
     check("带会话请求正常", status == 200 and '"result"' in body, f"{status} {body[:40]}")
+    status, _, body = post("/mcp", json.dumps({"jsonrpc": "2.0", "id": 14, "method": "tools/list"}),
+                           {"Mcp-Session-Id": sess})
+    check("同会话 tools/list 复用", status == 200 and '"tools"' in body, f"{status} {body[:40]}")
+    status, _, body = post("/mcp", json.dumps({"jsonrpc": "2.0", "id": 15, "method": "tools/call",
+                                               "params": {"name": "get_time"}}),
+                           {"Mcp-Session-Id": sess})
+    check("同会话 tools/call 复用", status == 200 and '"text"' in body, f"{status} {body[:40]}")
     status, _, _ = post("/mcp", json.dumps({"jsonrpc": "2.0", "id": 12, "method": "ping"}),
                         {"Mcp-Session-Id": "vb6-invalid-session"})
     check("无效会话 -> 404", status == 404, status)

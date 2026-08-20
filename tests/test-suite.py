@@ -313,6 +313,48 @@ def raw_cases():
            any('"id":42' in o and '"result":{}' in o for o in out)
            and any('"id":43' in o and '"result":{}' in o for o in out), str(out))
 
+    # ---- 协议健壮性（参考官方 Python SDK 客户端测试思路）----
+    out = raw_run(["bad json", '{"jsonrpc":"2.0","id":1,"method":"ping"}'])
+    record("裸协议", "错误后恢复（坏消息后 ping 正常）",
+           any('"code":-32700' in o for o in out)
+           and any('"id":1' in o and '"result"' in o for o in out), str(out))
+
+    out = raw_run(['{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2026-01-01"}}'])
+    record("裸协议", "未来版本协商到最高支持",
+           any('"protocolVersion":"2025-11-25"' in o for o in out), str(out)[:80])
+
+    out = raw_run(['{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2023-01-01"}}'])
+    record("裸协议", "极旧版本回退基线",
+           any('"protocolVersion":"2024-11-05"' in o for o in out), str(out)[:80])
+
+    out = raw_run(['{"jsonrpc":"2.0","id":1,"method":"initialize"}'])
+    record("裸协议", "initialize 无 params 容错",
+           any('"protocolVersion":"2024-11-05"' in o for o in out), str(out)[:80])
+
+    out = raw_run(['{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}'])
+    record("裸协议", "initialize 无 protocolVersion 容错",
+           any('"protocolVersion":"2024-11-05"' in o for o in out), str(out)[:80])
+
+    out = raw_run(['{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18"}}'])
+    record("裸协议", "initialize 响应含三字段",
+           any('"protocolVersion"' in o and '"capabilities"' in o and '"serverInfo"' in o for o in out),
+           str(out)[:80])
+
+    out = raw_run(['{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{"cursor":"abc"}}'])
+    record("裸协议", "list 方法 cursor 参数兼容",
+           any('"id":1' in o and '"tools"' in o for o in out), str(out)[:60])
+
+    out = raw_run(['{"jsonrpc":"2.0","method":"ping"}'])
+    record("裸协议", "无 id 请求宽松处理（按 null id 响应）",
+           len(out) == 1 and '"id":null' in out[0] and '"result"' in out[0], str(out))
+
+    out = raw_run(['{"jsonrpc":"2.0","id":1,"method":123}'])
+    record("裸协议", "method 非字符串容错", any('"code":-32601' in o for o in out), str(out))
+
+    out = raw_run(['{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"get_time"}}'])
+    record("裸协议", "tools/call 无 arguments 正常",
+           any('"id":1' in o and '"result"' in o and '"text"' in o for o in out), str(out)[:80])
+
 
 # ==================== 汇总 ====================
 def main():

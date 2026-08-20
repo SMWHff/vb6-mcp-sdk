@@ -24,7 +24,7 @@
 - 🔤 **中文友好**：UTF-8 全链路编解码，工具名用 ASCII、描述与结果可中文
 - 🛡️ **错误语义**：工具抛错自动转 `isError` 结果、缺参自动校验（-32602），AI 端可见错误文本
 - 📦 **零依赖**：仅 VB6 + Win32 API + 纯 VB6 JSON 库（VBJSON），无任何第三方 VB6 控件
-- 🧪 **可测试**：75 用例 stdio 测试套件 + 31 项 HTTP 专项，官方 Python SDK 双传输验证
+- 🧪 **可测试**：85 用例 stdio 测试套件 + 33 项 HTTP 专项，官方 Python SDK 双传输验证
 
 ---
 
@@ -69,8 +69,8 @@ vb6-mcp-sdk\
 │   └── utf8-to-gbk.ps1         ← VB6 源码 UTF-8（含 BOM）转 GBK，防中文乱码
 └── tests\                      ← 测试用例
     ├── test.ps1                ← stdio 冒烟测试
-    ├── test-suite.py           ← ★ stdio 全面测试套件（75 用例）
-    ├── http-test.py            ← ★ HTTP 传输层专项（31 项：会话/边界/三能力全链路/SSE）
+    ├── test-suite.py           ← ★ stdio 全面测试套件（85 用例）
+    ├── http-test.py            ← ★ HTTP 传输层专项（33 项：会话/边界/三能力全链路/SSE）
     ├── coverage.py             ← ★ 测试用例覆盖率自动统计（工具/提示词/资源/模板/协议方法）
     ├── coverage-whitebox.py    ← ★ 白盒覆盖率自动统计（VB6 源码过程级调用图，仅自研代码，VBJSON 第三方库排除）
     ├── client-sdk.py           ← 官方 Python SDK 握手（stdio）
@@ -306,10 +306,10 @@ End Sub
 # 1) 冒烟测试（stdio，5 条消息）
 pwsh .\tests\test.ps1
 
-# 2) ★ 全面测试套件（stdio，75 用例：握手/工具/提示词/资源/模板/安全/裸协议/边界/数据完整性/MES/协议扩展）
+# 2) ★ 全面测试套件（stdio，85 用例：握手/工具/提示词/资源/模板/安全/裸协议/边界/数据完整性/MES/协议扩展/健壮性）
 uv run --with mcp python .\tests\test-suite.py
 
-# 3) ★ HTTP 传输层专项（31 项：CORS/202/404/OPTIONS/中文/缺参/会话/边界/三能力全链路/GET-SSE）
+# 3) ★ HTTP 传输层专项（33 项：CORS/202/404/OPTIONS/中文/缺参/会话/边界/三能力全链路/GET-SSE）
 #    先启动：.\vb6-mcp-sdk.exe /http:9002
 uv run python .\tests\http-test.py http://localhost:9002/mcp
 
@@ -323,7 +323,7 @@ uv run --with mcp python .\tests\client-sdk-http.py http://localhost:9000/mcp
 npx @modelcontextprotocol/inspector .\vb6-mcp-sdk.exe
 ```
 
-**测试套件覆盖**（`test-suite.py` 75 用例）：握手 5（含 capabilities 订阅/日志/补全声明）· 工具 37（含负数/小数/特殊字符/10KB 长文本/未知工具/缺参/isError/数据完整性/MES 4 例/structuredContent 2 例）· 提示词 5 · 资源 6 · 安全 3（路径穿越/绝对路径/非法扩展名）· 裸协议 19（非法 JSON/未知方法/通知无响应/字符串 id/数字 id/CRLF/补全/日志/订阅）。**裸协议用例能抓到官方 SDK 客户端测不出的问题**（如字符串 id 不带引号、`\uXXXX` 转义解析）——已两次真实发现并修复框架 bug。MES 用例依赖内网服务器 192.168.20.151（接口见教程文档），不可达时对应用例会报失败。
+**测试套件覆盖**（`test-suite.py` 85 用例）：握手 5（含 capabilities 订阅/日志/补全声明）· 工具 37（含负数/小数/特殊字符/10KB 长文本/未知工具/缺参/isError/数据完整性/MES 4 例/structuredContent 2 例）· 提示词 5 · 资源 6 · 安全 3（路径穿越/绝对路径/非法扩展名）· 裸协议 29（非法 JSON/未知方法/通知无响应/id 类型/CRLF/补全/日志/订阅/错误后恢复/版本协商边界/cursor/initialize 容错）。**裸协议用例能抓到官方 SDK 客户端测不出的问题**（如字符串 id 不带引号、`\uXXXX` 转义解析）——已两次真实发现并修复框架 bug。MES 用例依赖内网服务器 192.168.20.151（接口见教程文档），不可达时对应用例会报失败。
 
 ---
 
