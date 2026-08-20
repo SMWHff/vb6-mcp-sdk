@@ -24,7 +24,7 @@
 - 🔤 **中文友好**：UTF-8 全链路编解码，工具名用 ASCII、描述与结果可中文
 - 🛡️ **错误语义**：工具抛错自动转 `isError` 结果、缺参自动校验（-32602），AI 端可见错误文本
 - 📦 **零依赖**：仅 VB6 + Win32 API + 纯 VB6 JSON 库（VBJSON），无任何第三方 VB6 控件
-- 🧪 **可测试**：33 用例 stdio 测试套件 + 13 项 HTTP 专项，官方 Python SDK 双传输验证
+- 🧪 **可测试**：41 用例 stdio 测试套件 + 17 项 HTTP 专项，官方 Python SDK 双传输验证
 
 ---
 
@@ -66,7 +66,7 @@ vb6-mcp-sdk\
 └── tests\                      ← 测试用例
     ├── test.ps1                ← stdio 冒烟测试
     ├── test-suite.py           ← ★ stdio 全面测试套件（33 用例）
-    ├── http-test.py            ← ★ HTTP 传输层专项（13 项）
+    ├── http-test.py            ← ★ HTTP 传输层专项（17 项：含会话管理）
     ├── client-sdk.py           ← 官方 Python SDK 握手（stdio）
     └── client-sdk-http.py      ← 官方 Python SDK 走 HTTP
 ```
@@ -283,6 +283,7 @@ End Sub
 ```
 
 - 客户端接入端点：`http://localhost:9000/mcp`
+- **会话管理**：首次请求自动创建会话并返回 `Mcp-Session-Id` 响应头，后续请求携带该头复用；`DELETE /mcp` 关闭会话（无效会话返回 404）
 - 支持 **CORS**，浏览器/Web 端 MCP 客户端可直接跨域调用
 - 传输层为纯 Winsock API 自实现，无第三方 HTTP 组件
 - 结合 `tests/client-sdk-http.py`（官方 Python SDK）可快速联调
@@ -302,7 +303,7 @@ pwsh .\tests\test.ps1
 # 2) ★ 全面测试套件（stdio，33 用例：握手/工具/提示词/资源/安全/裸协议错误）
 uv run --with mcp python .\tests\test-suite.py
 
-# 3) ★ HTTP 传输层专项（13 项：CORS/202/404/OPTIONS/中文/缺参）
+# 3) ★ HTTP 传输层专项（17 项：CORS/202/404/OPTIONS/中文/缺参/会话管理）
 #    先启动：.\vb6-mcp-sdk.exe /http:9002
 uv run python .\tests\http-test.py http://localhost:9002/mcp
 
@@ -385,7 +386,7 @@ npx @modelcontextprotocol/inspector .\vb6-mcp-sdk.exe
 - **技术栈**：VB6（32 位）+ Win32 API + VBJSON（纯 VB6 JSON 库）——无任何第三方 VB6 控件依赖
 - **贡献方式**：
   - 新增示例工具：实现 `ITool` / `IPrompt` / `IResource` / `ITemplate` 接口，参考 `tools/` 下的模板
-  - 修复 bug：跑通 `tests/test-suite.py`（41 用例）+ `tests/http-test.py`（13 项）后再提交
+  - 修复 bug：跑通 `tests/test-suite.py`（41 用例）+ `tests/http-test.py`（17 项）后再提交
   - 提交规范：Conventional Commits（`feat(scope): 描述`，描述用中文）
 - **测试**：官方 Python SDK（stdio + Streamable HTTP 双传输）全链路验证 + 裸协议错误用例（能抓到官方客户端测不出的问题）
 - **相关资源**：[MCP 官方规范](https://modelcontextprotocol.io/) · [Python SDK](https://github.com/modelcontextprotocol/python-sdk) · [Inspector 调试器](https://github.com/modelcontextprotocol/inspector)

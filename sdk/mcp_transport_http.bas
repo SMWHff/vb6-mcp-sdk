@@ -8,7 +8,6 @@
 '        Declare 必须 Public；字节缓冲用独立长度变量防 0 字节污染
 ' ============================================================
 Option Explicit
-
 Private Declare Function WSAStartup Lib "ws2_32.dll" (ByVal wVersionRequested As Integer, ByRef lpWSAData As Any) As Long
 Private Declare Function WSACleanup Lib "ws2_32.dll" () As Long
 Public Declare Function WSAGetLastError Lib "ws2_32.dll" () As Long
@@ -20,21 +19,18 @@ Private Declare Function recv Lib "ws2_32.dll" (ByVal s As Long, ByRef buf As An
 Private Declare Function send Lib "ws2_32.dll" (ByVal s As Long, ByRef buf As Any, ByVal buflen As Long, ByVal flags As Long) As Long
 Private Declare Function closesocket Lib "ws2_32.dll" (ByVal s As Long) As Long
 Private Declare Function htons Lib "ws2_32.dll" (ByVal hostshort As Integer) As Integer
-
 Private Const AF_INET As Long = 2
 Private Const SOCK_STREAM As Long = 1
 Private Const IPPROTO_TCP As Long = 6
 Private Const SOMAXCONN As Long = 5
 Private Const INADDR_ANY As Long = 0
 Private Const RECV_CHUNK As Long = 4096
-
 Private Type sockaddr_in
     sin_family As Integer
     sin_port As Integer
     sin_addr As Long
     sin_zero As String * 8
 End Type
-
 Private Type WSADATA
     wVersion As Integer
     wHighVersion As Integer
@@ -44,7 +40,6 @@ Private Type WSADATA
     iMaxUdpDg As Integer
     lpVendorInfo As Long
 End Type
-
 ' 初始化并监听端口，返回监听 socket（失败返回 0）
 Public Function HttpStart(ByVal port As Long) As Long
     Dim wsa As WSADATA
@@ -64,7 +59,6 @@ Public Function HttpStart(ByVal port As Long) As Long
     End If
     HttpStart = s
 End Function
-
 ' 阻塞等待连接，返回连接 socket（失败返回 0）
 Public Function HttpAccept(ByVal listenSock As Long) As Long
     Dim addr As sockaddr_in
@@ -72,18 +66,15 @@ Public Function HttpAccept(ByVal listenSock As Long) As Long
     addrLen = LenB(addr)
     HttpAccept = accept(listenSock, addr, addrLen)
 End Function
-
 ' 读取一个完整 HTTP 请求；返回 0=成功，其他=失败
-Public Function HttpReadRequest(ByVal conn As Long, ByRef method As String, ByRef path As String, ByRef body As String) As Long
-    method = "": path = "": body = ""
+Public Function HttpReadRequest(ByVal conn As Long, ByRef method As String, ByRef path As String, ByRef body As String, ByRef sessionId As String) As Long
+    method = "": path = "": body = "": sessionId = ""
     Dim acc() As Byte
-    ReDim acc(0 To 0)          ' 占位数组；真实长度由 accLen 跟踪
+    ReDim acc(0 To 0)
     Dim accLen As Long
     accLen = 0
     Dim b(0 To RECV_CHUNK - 1) As Byte
     Dim n As Long, sepPos As Long
-
-    ' 收数据直到出现 \r\n\r\n（头结束）
     Do
         n = recv(conn, b(0), RECV_CHUNK, 0)
         If n <= 0 Then Exit Function
@@ -92,10 +83,9 @@ Public Function HttpReadRequest(ByVal conn As Long, ByRef method As String, ByRe
         If sepPos >= 0 Then Exit Do
         If accLen > 65536 Then Exit Function
     Loop
-
-    ' 完整头 = acc(0..sepPos+3)，含 \r\n\r\n
     Dim head As String
     head = BytesAscii(acc, sepPos + 4)
+    sessionId = GetHeaderText(head, "Mcp-Session-Id")
     Dim line As String
     line = Left$(head, InStr(1, head, vbCrLf) - 1)
     Dim sp1 As Long, sp2 As Long
@@ -107,8 +97,6 @@ Public Function HttpReadRequest(ByVal conn As Long, ByRef method As String, ByRe
     Else
         Exit Function
     End If
-
-    ' body：按 Content-Length 从 acc 提取，不足则继续 recv
     Dim cl As Long
     cl = GetHeaderLong(head, "Content-Length")
     If cl > 0 Then
@@ -125,41 +113,35 @@ Public Function HttpReadRequest(ByVal conn As Long, ByRef method As String, ByRe
         For i = 0 To cl - 1
             bodyBytes(i) = acc(bodyStart + i)
         Next i
-        body = Utf8Decode(bodyBytes, cl)   ' body 是 UTF-8 JSON
+        body = Utf8Decode(bodyBytes, cl)
     End If
     HttpReadRequest = 0
 End Function
-
 ' 发送 200 JSON 响应
 Public Function HttpSendJson(ByVal conn As Long, ByVal jsonBody As String) As Long
     HttpSendJson = HttpSendRaw(conn, 200, "OK", "application/json", jsonBody)
 End Function
-
 ' 发送 202（通知类请求）
 Public Function HttpSendAccepted(ByVal conn As Long) As Long
     HttpSendAccepted = HttpSendRaw(conn, 202, "Accepted", "application/json", "")
 End Function
-
 ' 发送 404
 Public Function HttpSendNotFound(ByVal conn As Long) As Long
     HttpSendNotFound = HttpSendRaw(conn, 404, "Not Found", "application/json", "{""error"":""not found""}")
 End Function
-
 ' 发送 204（OPTIONS 预检）
 Public Function HttpSendPreflight(ByVal conn As Long) As Long
     HttpSendPreflight = HttpSendRaw(conn, 204, "No Content", "", "")
 End Function
-
 ' 核心发送：组头 + UTF-8 body，一次发送
 Public Function HttpSendRaw(ByVal conn As Long, ByVal status As Long, ByVal statusText As String, _
-    ByVal ctype As String, ByVal body As String) As Long
+    ByVal ctype As String, ByVal body As String, Optional ByVal extraHeader As String = "") As Long
     On Error GoTo FailSend
     Dim b() As Byte
     b = Utf8Encode(body)
     Dim blen As Long
     blen = UBound(b) + 1
     If Len(ctype) = 0 Then ctype = "text/plain"
-
     Dim head As String
     head = "HTTP/1.1 " & status & " " & statusText & vbCrLf _
         & "Content-Type: " & ctype & "; charset=utf-8" & vbCrLf _
@@ -167,8 +149,8 @@ Public Function HttpSendRaw(ByVal conn As Long, ByVal status As Long, ByVal stat
         & "Connection: close" & vbCrLf _
         & "Access-Control-Allow-Origin: *" & vbCrLf _
         & "Access-Control-Allow-Headers: Content-Type, MCP-Protocol-Version, Mcp-Session-Id" & vbCrLf _
-        & "Access-Control-Allow-Methods: POST, GET, OPTIONS" & vbCrLf _
-        & vbCrLf
+        & "Access-Control-Allow-Methods: POST, GET, OPTIONS, DELETE" & vbCrLf
+    head = head & extraHeader & vbCrLf
     Dim hb() As Byte
     hb = Utf8Encode(head)
     Call send(conn, hb(0), UBound(hb) + 1, 0)
@@ -178,19 +160,16 @@ Public Function HttpSendRaw(ByVal conn As Long, ByVal status As Long, ByVal stat
 FailSend:
     HttpSendRaw = -1
 End Function
-
 ' 关闭连接
 Public Sub HttpClose(ByVal conn As Long)
     On Error Resume Next
     If conn > 0 Then Call closesocket(conn)
 End Sub
-
 ' 程序退出前清理
 Public Sub HttpCleanup()
     On Error Resume Next
     Call WSACleanup
 End Sub
-
 ' ---- 内部辅助 ----
 ' 在 acc 前 accLen 字节中找 \r\n\r\n，返回 \r 的 0 基索引；找不到返回 -1
 Private Function ByteFindCrlfCrlf(ByRef acc() As Byte, ByVal accLen As Long) As Long
@@ -203,7 +182,6 @@ Private Function ByteFindCrlfCrlf(ByRef acc() As Byte, ByVal accLen As Long) As 
     Next i
     ByteFindCrlfCrlf = -1
 End Function
-
 ' 把 b 的前 n 字节追加到 acc（真实长度由 accLen 跟踪，避免占位 0 字节污染）
 Private Sub ByteAppend(ByRef acc() As Byte, ByRef b() As Byte, ByVal n As Long, ByRef accLen As Long)
     ReDim Preserve acc(0 To accLen + n - 1)
@@ -213,7 +191,6 @@ Private Sub ByteAppend(ByRef acc() As Byte, ByRef b() As Byte, ByVal n As Long, 
     Next i
     accLen = accLen + n
 End Sub
-
 ' 前 count 字节转 ASCII 字符串（HTTP 头）
 Private Function BytesAscii(ByRef acc() As Byte, ByVal count As Long) As String
     If count <= 0 Then Exit Function
@@ -225,7 +202,6 @@ Private Function BytesAscii(ByRef acc() As Byte, ByVal count As Long) As String
     Next i
     BytesAscii = s
 End Function
-
 ' 从头里取整数头字段（如 Content-Length）
 Private Function GetHeaderLong(ByVal head As String, ByVal name As String) As Long
     Dim pos As Long
@@ -235,4 +211,30 @@ Private Function GetHeaderLong(ByVal head As String, ByVal name As String) As Lo
     line = Mid$(head, pos + Len(name) + 1)
     line = Left$(line, InStr(1, line, vbCrLf) - 1)
     GetHeaderLong = Val(Trim$(line))
+End Function
+' 从头里取字符串头字段（如 Mcp-Session-Id），取不到返回 ""
+Private Function GetHeaderText(ByVal head As String, ByVal name As String) As String
+    Dim pos As Long
+    pos = InStr(1, LCase$(head), LCase$(name) & ":")
+    If pos = 0 Then Exit Function
+    Dim line As String
+    line = Mid$(head, pos + Len(name) + 1)
+    line = Left$(line, InStr(1, line, vbCrLf) - 1)
+    GetHeaderText = Trim$(line)
+End Function
+' 发送 204（DELETE 关会话成功）
+Public Function HttpSendNoContent(ByVal conn As Long) As Long
+    HttpSendNoContent = HttpSendRaw(conn, 204, "No Content", "", "")
+End Function
+' 发送 200 JSON 响应（带 Mcp-Session-Id 头）
+Public Function HttpSendJsonWithSession(ByVal conn As Long, ByVal jsonBody As String, ByVal sess As String) As Long
+    Dim extra As String
+    If Len(sess) > 0 Then extra = "Mcp-Session-Id: " & sess & vbCrLf
+    HttpSendJsonWithSession = HttpSendRaw(conn, 200, "OK", "application/json", jsonBody, extra)
+End Function
+' 发送 202（通知类请求，带 Mcp-Session-Id 头）
+Public Function HttpSendAcceptedWithSession(ByVal conn As Long, ByVal sess As String) As Long
+    Dim extra As String
+    If Len(sess) > 0 Then extra = "Mcp-Session-Id: " & sess & vbCrLf
+    HttpSendAcceptedWithSession = HttpSendRaw(conn, 202, "Accepted", "application/json", "", extra)
 End Function

@@ -29,6 +29,7 @@ Private m_tools As Collection
 Private m_prompts As Collection
 Private m_resources As Collection
 Private m_templates As Collection
+Private m_sessions As Collection
 Private m_serverName As String
 Private m_serverVersion As String
 
@@ -37,6 +38,7 @@ Private Sub Class_Initialize()
     Set m_prompts = New Collection
     Set m_resources = New Collection
     Set m_templates = New Collection
+    Set m_sessions = New Collection
     m_serverName = "vb6-mcp-sdk"
     m_serverVersion = "1.0.0"
 End Sub
@@ -339,20 +341,32 @@ End Function
 
 Private Sub HandleHttpConnection(ByVal conn As Long)
     On Error GoTo ConnFail
-    Dim method As String, path As String, reqBody As String
+    Dim method As String, path As String, reqBody As String, sess As String
     Dim rc As Long
-    rc = HttpReadRequest(conn, method, path, reqBody)
+    rc = HttpReadRequest(conn, method, path, reqBody, sess)
     If rc <> 0 Then Exit Sub
 
     If method = "OPTIONS" Then
         Call HttpSendPreflight(conn)
+    ElseIf method = "DELETE" And path = "/mcp" Then
+        If Len(sess) > 0 Then Call RemoveSession(sess)
+        Call HttpSendNoContent(conn)
     ElseIf method = "POST" And path = "/mcp" Then
+        Dim newSess As String
+        newSess = ""
+        If Len(sess) = 0 Then
+            newSess = NewSessionId()
+            m_sessions.Add newSess
+        ElseIf Not SessionExists(sess) Then
+            Call HttpSendNotFound(conn)
+            Exit Sub
+        End If
         Dim resp As String
         resp = HandleMessage(reqBody)
         If Len(resp) > 0 Then
-            Call HttpSendJson(conn, resp)
+            Call HttpSendJsonWithSession(conn, resp, newSess)
         Else
-            Call HttpSendAccepted(conn)
+            Call HttpSendAcceptedWithSession(conn, newSess)
         End If
     ElseIf method = "GET" Then
         Call HttpSendJson(conn, "{""name"":""" & m_serverName & """,""mode"":""streamable-http"",""endpoint"":""/mcp""}")
@@ -411,3 +425,31 @@ Private Function SelectProtocolVersion(ByVal clientVer As String) As String
         SelectProtocolVersion = PROTOCOL_VERSION
     End If
 End Function
+
+
+' ===================== HTTP 会话管理 =====================
+
+Private Function NewSessionId() As String
+    Randomize
+    NewSessionId = "vb6-" & Format$(Now, "yyyymmddhhmmss") & "-" & Format$(Int(Rnd * 900000) + 100000, "000000")
+End Function
+
+Private Function SessionExists(ByVal id As String) As Boolean
+    Dim s As Variant
+    For Each s In m_sessions
+        If CStr(s) = id Then
+            SessionExists = True
+            Exit Function
+        End If
+    Next s
+End Function
+
+Private Sub RemoveSession(ByVal id As String)
+    Dim i As Long
+    For i = m_sessions.Count To 1 Step -1
+        If CStr(m_sessions(i)) = id Then
+            m_sessions.Remove i
+            Exit Sub
+        End If
+    Next i
+End Sub

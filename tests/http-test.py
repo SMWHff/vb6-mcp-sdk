@@ -1,4 +1,4 @@
-﻿# http-test.py —— vb6-mcp-sdk Streamable HTTP 传输层专项测试
+# http-test.py —— vb6-mcp-sdk Streamable HTTP 传输层专项测试
 # 用法：先启动 .\vb6-mcp-sdk.exe /http:9002
 #       uv run python scripts/http-test.py [URL]
 # 覆盖：POST /mcp、OPTIONS 预检+CORS、GET 健康检查、404、202 通知、
@@ -94,6 +94,23 @@ def main():
     status, _, body = post("/mcp", json.dumps({"jsonrpc": "2.0", "id": 4, "method": "tools/call",
                                                "params": {"name": "add", "arguments": {"a": 1}}}))
     check("缺参拦截 -> 缺少必需参数", "缺少必需参数" in body, body[:60])
+
+    # 10. 会话管理（Mcp-Session-Id）
+    status, headers, _ = post("/mcp", json.dumps({"jsonrpc": "2.0", "id": 10, "method": "ping"}))
+    sess = headers.get("Mcp-Session-Id", "")
+    check("首次请求返回 Mcp-Session-Id", len(sess) > 0, sess[:30])
+    status, _, body = post("/mcp", json.dumps({"jsonrpc": "2.0", "id": 11, "method": "ping"}),
+                           {"Mcp-Session-Id": sess})
+    check("带会话请求正常", status == 200 and '"result"' in body, f"{status} {body[:40]}")
+    status, _, _ = post("/mcp", json.dumps({"jsonrpc": "2.0", "id": 12, "method": "ping"}),
+                        {"Mcp-Session-Id": "vb6-invalid-session"})
+    check("无效会话 -> 404", status == 404, status)
+    req = urllib.request.Request(URL, method="DELETE", headers={"Mcp-Session-Id": sess})
+    try:
+        resp = urllib.request.urlopen(req, timeout=10)
+        check("DELETE 关会话 -> 204", resp.status == 204, resp.status)
+    except urllib.error.HTTPError as e:
+        check("DELETE 关会话 -> 204", e.code == 204, e.code)
 
     print("\n" + "=" * 56)
     print(f"结果: {PASS}/{PASS + len(FAIL)} 通过")
