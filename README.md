@@ -71,6 +71,7 @@ vb6-mcp-sdk\
     ├── test-suite.py           ← ★ stdio 全面测试套件（65 用例）
     ├── http-test.py            ← ★ HTTP 传输层专项（28 项：会话/边界/三能力全链路）
     ├── coverage.py             ← ★ 测试用例覆盖率自动统计（工具/提示词/资源/模板/协议方法）
+    ├── coverage-whitebox.py    ← ★ 白盒覆盖率自动统计（VB6 源码过程级调用图分析）
     ├── client-sdk.py           ← 官方 Python SDK 握手（stdio）
     └── client-sdk-http.py      ← 官方 Python SDK 走 HTTP
 ```
@@ -296,7 +297,7 @@ End Sub
 
 ## 验证
 
-**一键运行**：`.\run_test.bat` —— 自动检查/安装 uv、exe 缺失时自动调用 VB6 编译、跑 fix-console、执行全部 5 组测试，**并在最后自动输出测试用例覆盖率报告**（`tests/coverage.py` 统计工具/提示词/资源/模板/协议方法的覆盖比例）；完整输出同时显示在控制台并记录到 `logs\run_test_*.log`。退出码：0=全部通过 / 1=有失败 / 2=环境未就绪。
+**一键运行**：`.\run_test.bat` —— 自动检查/安装 uv、exe 缺失时自动调用 VB6 编译、跑 fix-console、执行全部 5 组测试，**并在最后自动输出两份覆盖率报告**：黑盒报告（`tests/coverage.py` 统计工具/提示词/资源/模板/协议方法）+ 白盒报告（`tests/coverage-whitebox.py` 对全部 VB6 源码做过程级调用图可达性分析，自研代码 / VBJSON 库分开统计）；完整输出同时显示在控制台并记录到 `logs\run_test_*.log`。退出码：0=全部通过 / 1=有失败 / 2=环境未就绪。
 
 也可以单独执行各测试：
 
@@ -321,7 +322,7 @@ uv run --with mcp python .\tests\client-sdk-http.py http://localhost:9000/mcp
 npx @modelcontextprotocol/inspector .\vb6-mcp-sdk.exe
 ```
 
-**测试套件覆盖**（`test-suite.py` 33 用例）：握手 4 · 工具 14（含负数/小数/特殊字符/10KB 长文本/未知工具/缺参/isError）· 提示词 3 · 资源 3 · 安全 3（路径穿越/绝对路径/非法扩展名）· 裸协议 6（非法 JSON/未知方法/通知无响应/字符串 id/数字 id/CRLF）。**裸协议用例能抓到官方 SDK 客户端测不出的问题**（如字符串 id 不带引号、`\uXXXX` 转义解析）——已两次真实发现并修复框架 bug。
+**测试套件覆盖**（`test-suite.py` 65 用例）：握手 4 · 工具 31（含负数/小数/特殊字符/10KB 长文本/未知工具/缺参/isError/数据完整性）· 提示词 5 · 资源 6 · 安全 3（路径穿越/绝对路径/非法扩展名）· 裸协议 16（非法 JSON/未知方法/通知无响应/字符串 id/数字 id/CRLF）。**裸协议用例能抓到官方 SDK 客户端测不出的问题**（如字符串 id 不带引号、`\uXXXX` 转义解析）——已两次真实发现并修复框架 bug。
 
 ---
 

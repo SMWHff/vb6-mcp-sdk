@@ -8,7 +8,7 @@ rem
 rem  流程：
 rem    1) 环境自检与自安装：uv（缺失时自动安装）、PowerShell（无 7 用 5.1 兜底）
 rem    2) 自动部署：exe 缺失时尝试 VB6 命令行编译；编译/已存在后自动跑 fix-console
-rem    3) 自动运行全部 5 组测试：冒烟 / 33 用例套件 / HTTP 13 项 / 官方 SDK stdio / HTTP
+rem    3) 自动运行全部 5 组测试：冒烟 / 65 用例套件 / HTTP 28 项 / 官方 SDK stdio / HTTP
 rem    4) 汇总报告
 rem
 rem  退出码：0 = 全部通过    1 = 有测试失败    2 = 环境未就绪（exe 无法准备）
@@ -107,16 +107,16 @@ echo ----- [1/5] 冒烟测试（stdio，5 条消息）-----
 %PS% -File "%ROOT%tests\test.ps1"
 if errorlevel 1 (echo [结果] 冒烟测试：失败 & set /a TFAIL+=1) else (echo [结果] 冒烟测试：通过 & set /a TPASS+=1)
 
-rem ---- 测试 2：全面测试套件（33 用例，需 mcp 包，首次自动下载）----
+rem ---- 测试 2：全面测试套件（65 用例，需 mcp 包，首次自动下载）----
 echo.
-echo ----- [2/5] 全面测试套件（33 用例：握手/工具/提示词/资源/安全/裸协议）-----
+echo ----- [2/5] 全面测试套件（65 用例：握手/工具/提示词/资源/安全/裸协议）-----
 echo        （首次运行会通过 uv 自动下载 mcp 包，可能需要几分钟）
 "%UV%" run --with mcp python "%ROOT%tests\test-suite.py"
 if errorlevel 1 (echo [结果] 全面测试套件：失败 & set /a TFAIL+=1) else (echo [结果] 全面测试套件：通过 & set /a TPASS+=1)
 
-rem ---- 测试 3：HTTP 传输层专项（13 项）----
+rem ---- 测试 3：HTTP 传输层专项（28 项）----
 echo.
-echo ----- [3/5] HTTP 传输层专项（13 项）-----
+echo ----- [3/5] HTTP 传输层专项（28 项）-----
 echo        启动 vb6-mcp-sdk.exe /http:9002 ...
 %PS% -Command "Start-Process -FilePath '%EXE%' -ArgumentList '/http:9002' -PassThru | ForEach-Object { $_.Id } | Out-File -Encoding ascii '%TEMP%\vb6mcp-sdk-9002.pid'"
 ping 127.0.0.1 -n 3 >nul
@@ -153,6 +153,12 @@ echo ============================================================
 echo  [4/3] 测试用例覆盖率（自动统计：工具/提示词/资源/模板/协议方法）
 echo ============================================================
 "%UV%" run --with mcp python "%ROOT%tests\coverage.py"
+
+echo.
+echo ============================================================
+echo  [4/4] 白盒覆盖率（VB6 源码过程级：调用图可达性分析）
+echo ============================================================
+"%UV%" run python "%ROOT%tests\coverage-whitebox.py"
 
 rem ---------- 4) 汇总 ----------
 echo.

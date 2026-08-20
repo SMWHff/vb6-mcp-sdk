@@ -61,8 +61,10 @@ vb6-mcp-sdk\
 │   └── fix-console.ps1         ← Must run after every compile (GUI→Console subsystem)
 └── tests\
     ├── test.ps1                ← stdio smoke test
-    ├── test-suite.py           ← ★ full stdio test suite (33 cases)
-    ├── http-test.py            ← ★ HTTP transport tests (13 checks)
+    ├── test-suite.py           ← ★ full stdio test suite (65 cases)
+    ├── http-test.py            ← ★ HTTP transport tests (28 checks)
+    ├── coverage.py             ← ★ black-box coverage (tools/prompts/resources/templates/methods)
+    ├── coverage-whitebox.py    ← ★ white-box coverage (VB6 source procedure-level call-graph)
     ├── client-sdk.py           ← official Python SDK handshake (stdio)
     └── client-sdk-http.py      ← official Python SDK over HTTP
 ```
@@ -287,7 +289,7 @@ Once compiled, register the exe in any MCP client.
 
 ## Verification & Testing
 
-**One-click**: `.\run_test.bat` — auto-checks/installs uv, auto-compiles with VB6 when the exe is missing, runs fix-console, then executes all 5 test groups, and **finally prints a test-coverage report automatically** (`tests/coverage.py` measures coverage of tools/prompts/resources/templates/protocol methods); the full output goes to the console and a `logs\run_test_*.log` file at the same time. Exit codes: 0=all passed / 1=failures / 2=environment not ready.
+**One-click**: `.\run_test.bat` — auto-checks/installs uv, auto-compiles with VB6 when the exe is missing, runs fix-console, then executes all 5 test groups, and **finally prints two coverage reports automatically**: a black-box report (`tests/coverage.py` covers tools/prompts/resources/templates/methods) plus a white-box report (`tests/coverage-whitebox.py` does procedure-level call-graph analysis over all VB6 sources, splitting self-written code vs the VBJSON library); the full output goes to the console and a `logs\run_test_*.log` file at the same time. Exit codes: 0=all passed / 1=failures / 2=environment not ready.
 
 Or run each test individually:
 
@@ -295,10 +297,10 @@ Or run each test individually:
 # 1) Smoke test (stdio, 5 messages)
 pwsh .\tests\test.ps1
 
-# 2) ★ Full test suite (stdio, 33 cases: handshake/tools/prompts/resources/security/raw protocol errors)
+# 2) ★ Full test suite (stdio, 65 cases: handshake/tools/prompts/resources/security/raw protocol errors)
 uv run --with mcp python .\tests\test-suite.py
 
-# 3) ★ HTTP transport tests (13 checks: CORS/202/404/OPTIONS/Chinese/missing args)
+# 3) ★ HTTP transport tests (28 checks: CORS/202/404/OPTIONS/Chinese/missing args)
 #    Start first: .\vb6-mcp-sdk.exe /http:9002
 uv run python .\tests\http-test.py http://localhost:9002/mcp
 
@@ -312,7 +314,7 @@ uv run --with mcp python .\tests\client-sdk-http.py http://localhost:9000/mcp
 npx @modelcontextprotocol/inspector .\vb6-mcp-sdk.exe
 ```
 
-**Test suite coverage** (`test-suite.py`, 33 cases): handshake 4 · tools 14 (negative numbers / decimals / special characters / 10KB long text / unknown tool / missing args / isError) · prompts 3 · resources 3 · security 3 (path traversal / absolute path / illegal extension) · raw protocol 6 (invalid JSON / unknown method / notification without response / string id / numeric id / CRLF). **The raw-protocol cases catch bugs the official SDK client cannot** (e.g. string ids without quotes, `\uXXXX` escape parsing) — they have already surfaced and fixed framework bugs twice.
+**Test suite coverage** (`test-suite.py`, 65 cases): handshake 4 · tools 31 (negative numbers / decimals / special characters / 10KB long text / unknown tool / missing args / isError / data integrity) · prompts 5 · resources 6 · security 3 (path traversal / absolute path / illegal extension) · raw protocol 16 (invalid JSON / unknown method / notification without response / string id / numeric id / CRLF). **The raw-protocol cases catch bugs the official SDK client cannot** (e.g. string ids without quotes, `\uXXXX` escape parsing) — they have already surfaced and fixed framework bugs twice.
 
 ---
 
