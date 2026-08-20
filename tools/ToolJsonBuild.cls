@@ -19,7 +19,7 @@ Private Property Get ITool_ToolName() As String
 End Property
 
 Private Property Get ITool_Description() As String
-    ITool_Description = "JsonBuild unit test: returns constructed JSON (string/number/bool/null/nested)"
+    ITool_Description = "JsonBuild 单元测试：返回构造的 JSON 对象（演示字符串/数字/布尔/null/嵌套）"
 End Property
 
 Private Property Get ITool_InputSchema() As String
