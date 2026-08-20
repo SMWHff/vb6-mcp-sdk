@@ -70,7 +70,7 @@ vb6-mcp-sdk\
     ├── test-suite.py           ← ★ full stdio test suite (69 cases)
     ├── http-test.py            ← ★ HTTP transport tests (28 checks)
     ├── coverage.py             ← ★ black-box coverage (tools/prompts/resources/templates/methods)
-    ├── coverage-whitebox.py    ← ★ white-box coverage (VB6 source procedure-level call-graph)
+    ├── coverage-whitebox.py    ← ★ white-box coverage (VB6 source procedure-level call-graph, self-written code only; VBJSON third-party lib excluded)
     ├── client-sdk.py           ← official Python SDK handshake (stdio)
     └── client-sdk-http.py      ← official Python SDK over HTTP
 ```
@@ -295,7 +295,7 @@ Once compiled, register the exe in any MCP client.
 
 ## Verification & Testing
 
-**One-click**: `.\run_test.bat` — auto-checks/installs uv, auto-compiles with VB6 when the exe is missing, runs fix-console, then executes all 5 test groups, and **finally prints two coverage reports automatically**: a black-box report (`tests/coverage.py` covers tools/prompts/resources/templates/methods) plus a white-box report (`tests/coverage-whitebox.py` does procedure-level call-graph analysis over all VB6 sources, splitting self-written code vs the VBJSON library); the full output goes to the console and a `logs\run_test_*.log` file at the same time. Exit codes: 0=all passed / 1=failures / 2=environment not ready.
+**One-click**: `.\run_test.bat` — auto-checks/installs uv, auto-compiles with VB6 when the exe is missing, runs fix-console, then executes all 5 test groups, and **finally prints two coverage reports automatically**: a black-box report (`tests/coverage.py` covers tools/prompts/resources/templates/methods) plus a white-box report (`tests/coverage-whitebox.py` does procedure-level call-graph analysis over all VB6 sources, **counting self-written code only — the VBJSON third-party library (sdk/json/) is excluded**, and host-facing counter properties are listed as exempted items; currently 100%); the full output goes to the console and a `logs\run_test_*.log` file at the same time. Exit codes: 0=all passed / 1=failures / 2=environment not ready.
 
 Or run each test individually:
 

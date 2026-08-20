@@ -122,10 +122,6 @@ End Function
 Public Function HttpSendJson(ByVal conn As Long, ByVal jsonBody As String) As Long
     HttpSendJson = HttpSendRaw(conn, 200, "OK", "application/json", jsonBody)
 End Function
-' 发送 202（通知类请求）
-Public Function HttpSendAccepted(ByVal conn As Long) As Long
-    HttpSendAccepted = HttpSendRaw(conn, 202, "Accepted", "application/json", "")
-End Function
 ' 发送 404
 Public Function HttpSendNotFound(ByVal conn As Long) As Long
     HttpSendNotFound = HttpSendRaw(conn, 404, "Not Found", "application/json", "{""error"":""not found""}")

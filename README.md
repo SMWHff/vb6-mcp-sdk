@@ -72,7 +72,7 @@ vb6-mcp-sdk\
     ├── test-suite.py           ← ★ stdio 全面测试套件（69 用例）
     ├── http-test.py            ← ★ HTTP 传输层专项（28 项：会话/边界/三能力全链路）
     ├── coverage.py             ← ★ 测试用例覆盖率自动统计（工具/提示词/资源/模板/协议方法）
-    ├── coverage-whitebox.py    ← ★ 白盒覆盖率自动统计（VB6 源码过程级调用图分析）
+    ├── coverage-whitebox.py    ← ★ 白盒覆盖率自动统计（VB6 源码过程级调用图，仅自研代码，VBJSON 第三方库排除）
     ├── client-sdk.py           ← 官方 Python SDK 握手（stdio）
     └── client-sdk-http.py      ← 官方 Python SDK 走 HTTP
 ```
@@ -298,7 +298,7 @@ End Sub
 
 ## 验证
 
-**一键运行**：`.\run_test.bat` —— 自动检查/安装 uv、exe 缺失时自动调用 VB6 编译、跑 fix-console、执行全部 5 组测试，**并在最后自动输出两份覆盖率报告**：黑盒报告（`tests/coverage.py` 统计工具/提示词/资源/模板/协议方法）+ 白盒报告（`tests/coverage-whitebox.py` 对全部 VB6 源码做过程级调用图可达性分析，自研代码 / VBJSON 库分开统计）；完整输出同时显示在控制台并记录到 `logs\run_test_*.log`。退出码：0=全部通过 / 1=有失败 / 2=环境未就绪。
+**一键运行**：`.\run_test.bat` —— 自动检查/安装 uv、exe 缺失时自动调用 VB6 编译、跑 fix-console、执行全部 5 组测试，**并在最后自动输出两份覆盖率报告**：黑盒报告（`tests/coverage.py` 统计工具/提示词/资源/模板/协议方法）+ 白盒报告（`tests/coverage-whitebox.py` 对全部 VB6 源码做过程级调用图可达性分析，**只统计自研代码，VBJSON 第三方库（sdk/json/）排除**，宿主公开计数属性列为豁免项，当前 100%）；完整输出同时显示在控制台并记录到 `logs\run_test_*.log`。退出码：0=全部通过 / 1=有失败 / 2=环境未就绪。
 
 也可以单独执行各测试：
 

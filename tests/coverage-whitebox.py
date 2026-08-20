@@ -48,6 +48,16 @@ KEYWORDS = set(
 INTERFACE_PREFIX = ("ITool_", "IPrompt_", "IResource_", "ITemplate_")
 INTERFACE_FILES = {"ITool.cls", "IPrompt.cls", "IResource.cls", "ITemplate.cls"}
 
+# Exemptions: public host-facing API that protocol tests never touch directly
+# (counters on McpServer are for host programs, not reachable via MCP methods).
+EXEMPT = {
+    ("McpServer", "ToolCount"),
+    ("McpServer", "PromptCount"),
+    ("McpServer", "ResourceCount"),
+    ("McpServer", "TemplateCount"),
+}
+EXEMPT_REASON = "宿主公开 API（计数属性），协议测试不直接触达"
+
 
 def strip_comment(line):
     """Cut a VB6 ' comment, ignoring quotes inside string literals."""
@@ -179,57 +189,56 @@ def main():
     edges = build_graph(procs)
     seen = reachable(procs, edges)
 
-    stat_procs = [p for p in procs if not p.is_interface]
+    def is_lib(path):
+        return os.path.relpath(path, ROOT).replace("\\", "/").startswith(GROUP_LIB)
+
+    # VBJSON (sdk/json/) is a third-party library: parsed for the call graph
+    # but excluded from the coverage statistics.
+    stat_procs = [p for p in procs if not p.is_interface and not is_lib(p.file)]
     by_file = {}
     for p in stat_procs:
         by_file.setdefault(p.file, []).append(p)
 
-    uncovered = [p for p in stat_procs if id(p) not in seen]
-
-    def is_lib(path):
-        return os.path.relpath(path, ROOT).replace("\\", "/").startswith(GROUP_LIB)
+    exempt = [p for p in stat_procs if (p.module, p.name) in EXEMPT]
+    exempt_keys = {(p.module, p.name) for p in exempt}
+    uncovered = [p for p in stat_procs if id(p) not in seen and (p.module, p.name) not in exempt_keys]
+    covered = [p for p in stat_procs if id(p) in seen]
 
     print("")
     print("=" * 58)
-    print("  白盒覆盖率报告（VB6 源码过程级）")
-    print("  入口根：Main + 协议分发 + 全部接口实现（测试实际执行路径）")
+    print("  白盒覆盖率报告（VB6 源码过程级 · 自研代码）")
+    print("  VBJSON 第三方库已排除 · 入口根：Main + 协议分发 + 接口实现")
     print("=" * 58)
 
-    core_cov, core_all = 0, 0
-    lib_cov, lib_all = 0, 0
     for path in sorted(by_file):
         ps = sorted(by_file[path], key=lambda p: p.line)
         c = sum(1 for p in ps if id(p) in seen)
         rel = os.path.relpath(path, ROOT).replace("\\", "/")
-        if is_lib(path):
-            lib_cov += c
-            lib_all += len(ps)
-        else:
-            core_cov += c
-            core_all += len(ps)
+        ex = sum(1 for p in ps if (p.module, p.name) in exempt_keys)
+        miss = [p for p in ps if id(p) not in seen and (p.module, p.name) not in exempt_keys]
         pct = c / len(ps) * 100 if ps else 100.0
-        mark = "✓" if c == len(ps) else "✗"
-        lib = "  [VBJSON 库]" if is_lib(path) else ""
-        print(f"  {rel:<32} {c:>3}/{len(ps):<3} ({pct:5.1f}%) {mark}{lib}")
-        miss = [p.name for p in ps if id(p) not in seen]
+        mark = "✓" if not miss else "✗"
+        note = f"  {ex} 项豁免" if ex else ""
+        print(f"  {rel:<32} {c:>3}/{len(ps):<3} ({pct:5.1f}%) {mark}{note}")
         if miss:
-            print(f"       未覆盖: {', '.join(miss)}")
+            print(f"       未覆盖: {', '.join(p.name for p in miss)}")
+        ex_names = [p.name for p in ps if (p.module, p.name) in exempt_keys]
+        if ex_names:
+            print(f"       豁免: {', '.join(ex_names)}（{EXEMPT_REASON}）")
 
+    applicable = len(stat_procs) - len(exempt)
+    pct = len(covered) / applicable * 100 if applicable else 100.0
+    lib_count = sum(1 for p in procs if not p.is_interface and is_lib(p.file))
     print("-" * 58)
-    core_pct = core_cov / core_all * 100 if core_all else 100.0
-    lib_pct = lib_cov / lib_all * 100 if lib_all else 100.0
-    total_pct = (core_cov + lib_cov) / (core_all + lib_all) * 100 if (core_all + lib_all) else 100.0
-    print(f"  自研代码  {core_cov:>3}/{core_all:<3} ({core_pct:5.1f}%)")
-    print(f"  VBJSON 库 {lib_cov:>3}/{lib_all:<3} ({lib_pct:5.1f}%)  （库内未使用功能不计入缺口）")
-    print(f"  总计      {core_cov + lib_cov:>3}/{core_all + lib_all:<3} ({total_pct:5.1f}%)")
-
+    print(f"  已覆盖 {len(covered):>3} / 应覆盖 {applicable:<3} ({pct:5.1f}%)")
+    print(f"  豁免 {len(exempt)} 项（{EXEMPT_REASON}）")
+    print(f"  VBJSON 第三方库 {lib_count} 个过程不计入覆盖率")
     if uncovered:
         print("-" * 58)
         print("  未覆盖过程（可能原因：死代码 / 缺少测试触达）：")
         for p in sorted(uncovered, key=lambda p: os.path.relpath(p.file, ROOT)):
             rel = os.path.relpath(p.file, ROOT).replace("\\", "/")
-            tag = "  [VBJSON 库]" if is_lib(p.file) else ""
-            print(f"    {rel}:{p.line}  {p.name}  ({p.kind}){tag}")
+            print(f"    {rel}:{p.line}  {p.name}  ({p.kind})")
     print("=" * 58)
 
 
