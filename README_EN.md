@@ -50,7 +50,7 @@ vb6-mcp-sdk\
 │   ├── ToolSysInfo.cls         ← Example tool: system info (Windows API)
 │   ├── ToolReadFile.cls        ← Example tool: whitelist-secured file reading
 │   ├── ToolWordCount.cls       ← Example tool: text statistics (demonstrates isError)
-│   ├── SamplePrompt.cls        ← Example prompt (code review assistant)
+│   ├── SamplePrompt.cls\n│   ├── SampleTranslate.cls        ← Example prompt (code review assistant)
 │   └── SampleResource.cls      ← Example resource (server info)
 ├── mcp_main.bas                   ← Entry point: create server, register capabilities, start
 ├── vb6-mcp-sdk.vbp              ← Project file (double-click to open)
@@ -214,7 +214,7 @@ Private Function IResource_ReadResourceText(ByVal uri As String) As String
 End Function
 ```
 
-Reference implementations: `tools\SamplePrompt.cls` (code review assistant), `tools\SampleResource.cls` (server info).
+Reference implementations: `tools\SamplePrompt.cls\n│   ├── SampleTranslate.cls` (code review assistant), `tools\SampleResource.cls` (server info).
 
 ---
 
@@ -381,7 +381,7 @@ Repository: [github.com/SMWHff/vb6-mcp-sdk](https://github.com/SMWHff/vb6-mcp-sd
 - **Tech stack**: VB6 (32-bit) + Win32 API + VBJSON (pure-VB6 JSON library) — no third-party VB6 controls
 - **Contributing**:
   - Add example tools: implement `ITool` / `IPrompt` / `IResource` / `ITemplate`, follow the templates under `tools/`
-  - Fix bugs: make sure `tests/test-suite.py` (57 cases) + `tests/http-test.py` (28 checks) pass before submitting
+  - Fix bugs: make sure `tests/test-suite.py` (65 cases) + `tests/http-test.py` (28 checks) pass before submitting
   - Commit style: Conventional Commits (`feat(scope): description`)
 - **Testing**: full verification against the official Python SDK over both transports (stdio + Streamable HTTP) plus raw-protocol error cases (which catch what official clients miss)
 - **Related resources**: [MCP specification](https://modelcontextprotocol.io/) · [Python SDK](https://github.com/modelcontextprotocol/python-sdk) · [Inspector](https://github.com/modelcontextprotocol/inspector)

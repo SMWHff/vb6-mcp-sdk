@@ -48,7 +48,7 @@ async def sdk_session_cases():
             # ---- Tools ----
             tools = await session.list_tools()
             names = [t.name for t in tools.tools]
-            record("工具", "tools/list 返回 8 个工具", len(tools.tools) == 8, str(names))
+            record("工具", "tools/list 返回 10 个工具", len(tools.tools) == 10, str(names))
             record("工具", "工具字段完整",
                    all(t.name and t.description and t.input_schema.get("type") == "object" for t in tools.tools))
 
@@ -130,13 +130,31 @@ async def sdk_session_cases():
             r = await session.call_tool("add", {"a": 1, "b": 2, "c": 99})
             record("工具", "额外参数忽略", r.content[0].text == "3", r.content[0].text)
 
+            r = await session.call_tool("text_case", {"text": "Hello VB6", "mode": "upper"})
+            record("工具", "text_case upper", r.content[0].text == "HELLO VB6", r.content[0].text)
+            r = await session.call_tool("text_case", {"text": "  hello  ", "mode": "trim"})
+            record("工具", "text_case trim", r.content[0].text == "hello", repr(r.content[0].text))
+            r = await session.call_tool("text_case", {"text": "abc", "mode": "reverse"})
+            record("工具", "text_case reverse", r.content[0].text == "cba", r.content[0].text)
+            r = await session.call_tool("text_case", {"text": "x", "mode": "bogus"})
+            record("工具", "text_case 非法mode isError", r.is_error is True, r.content[0].text[:30])
+            r = await session.call_tool("getenv", {"name": "PATH"})
+            record("工具", "getenv 存在变量", len(r.content[0].text) > 0, r.content[0].text[:20])
+            r = await session.call_tool("getenv", {"name": "MCP_NO_SUCH_VAR_XYZ", "default": "fb"})
+            record("工具", "getenv 默认值兜底", r.content[0].text == "fb", r.content[0].text)
+
             # ---- Prompts ----
             prompts = await session.list_prompts()
             record("提示词", "prompts/list 含 code_review",
                    any(p.name == "code_review" for p in prompts.prompts), [p.name for p in prompts.prompts])
+            record("提示词", "prompts/list 含 translate",
+                   any(p.name == "translate" for p in prompts.prompts), [p.name for p in prompts.prompts])
             pr = await session.get_prompt("code_review", {"language": "VB6", "code": "Dim x"})
             ptxt = pr.messages[0].content.text
             record("提示词", "prompts/get 包含参数", "VB6" in ptxt and "Dim x" in ptxt, ptxt[:40])
+            pr = await session.get_prompt("translate", {"language": "英语", "text": "你好"})
+            ptxt = pr.messages[0].content.text
+            record("提示词", "translate 生成指令", "英语" in ptxt and "你好" in ptxt, ptxt[:40])
             try:
                 await session.get_prompt("no_such_prompt", {})
                 record("提示词", "未知提示词 -> 错误", False, "未报错")

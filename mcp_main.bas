@@ -25,6 +25,7 @@ Public Sub Main()
     server.RegisterTool New ToolEcho
     server.RegisterTool New ToolGetTime
     server.RegisterPrompt New SamplePrompt
+    server.RegisterPrompt New SampleTranslate
     server.RegisterResource New SampleResource
     server.RegisterTemplate New SampleTemplate
     server.RegisterTool New ToolSysInfo
@@ -32,6 +33,8 @@ Public Sub Main()
     server.RegisterTool New ToolWordCount
     server.RegisterTool New ToolJsonBuild
     server.RegisterTool New ToolRand
+    server.RegisterTool New ToolText
+    server.RegisterTool New ToolEnv
 
     ' ===== 启动（按命令行参数选传输）=====
     If LCase$(Command$) Like "*http*" Then

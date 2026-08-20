@@ -24,7 +24,7 @@
 - 🔤 **中文友好**：UTF-8 全链路编解码，工具名用 ASCII、描述与结果可中文
 - 🛡️ **错误语义**：工具抛错自动转 `isError` 结果、缺参自动校验（-32602），AI 端可见错误文本
 - 📦 **零依赖**：仅 VB6 + Win32 API + 纯 VB6 JSON 库（VBJSON），无任何第三方 VB6 控件
-- 🧪 **可测试**：57 用例 stdio 测试套件 + 28 项 HTTP 专项，官方 Python SDK 双传输验证
+- 🧪 **可测试**：65 用例 stdio 测试套件 + 28 项 HTTP 专项，官方 Python SDK 双传输验证
 
 ---
 
@@ -51,7 +51,10 @@ vb6-mcp-sdk\
 │   ├── ToolReadFile.cls        ← 示例工具：白名单安全读文件
 │   ├── ToolWordCount.cls       ← 示例工具：文本统计（演示 isError）
 │   ├── ToolRand.cls            ← 示例工具：随机整数（演示数字参数/边界校验）
+│   ├── ToolText.cls            ← 示例工具：字符串处理（枚举参数 upper/lower/trim/reverse）
+│   ├── ToolEnv.cls             ← 示例工具：环境变量查询（可选默认值）
 │   ├── SamplePrompt.cls        ← 示例提示词（代码审查助手）
+│   ├── SampleTranslate.cls     ← 示例提示词（翻译助手）
 │   ├── SampleResource.cls      ← 示例资源（服务器信息）
 │   └── SampleTemplate.cls      ← 示例资源模板（demo://greet/{name} 动态问候）
 ├── mcp_main.bas                   ← 入口：创建 server、注册能力、启动
@@ -300,7 +303,7 @@ End Sub
 # 1) 冒烟测试（stdio，5 条消息）
 pwsh .\tests\test.ps1
 
-# 2) ★ 全面测试套件（stdio，57 用例：握手/工具/提示词/资源/模板/安全/裸协议/边界/数据完整性）
+# 2) ★ 全面测试套件（stdio，65 用例：握手/工具/提示词/资源/模板/安全/裸协议/边界/数据完整性）
 uv run --with mcp python .\tests\test-suite.py
 
 # 3) ★ HTTP 传输层专项（28 项：CORS/202/404/OPTIONS/中文/缺参/会话/边界/三能力全链路）
