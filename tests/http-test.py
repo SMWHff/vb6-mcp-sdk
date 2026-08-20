@@ -112,6 +112,24 @@ def main():
     except urllib.error.HTTPError as e:
         check("DELETE 关会话 -> 204", e.code == 204, e.code)
 
+    # 11. HTTP 边界与健壮性
+    status, _, body = post("/mcp", json.dumps({"jsonrpc": "2.0", "id": 13, "method": "tools/call",
+                                               "params": {"name": "echo", "arguments": {"text": "长" * 5000}}}))
+    check("HTTP 10KB 大 body", status == 200 and ("长" * 5000) in body, status)
+    status, _, body = post("/mcp", "")
+    check("无 body -> -32700", status == 200 and "-32700" in body, f"{status} {body[:40]}")
+    status, _, body = post("/mcp?x=1", json.dumps({"jsonrpc": "2.0", "id": 14, "method": "ping"}))
+    check("带 query 正常", status == 200 and '"result"' in body, status)
+    status, _, body = post("/mcp", json.dumps({"jsonrpc": "2.0", "id": 15, "method": "ping"}),
+                           {"Content-Type": "text/plain"})
+    check("非 JSON Content-Type 宽容", status == 200 and '"result"' in body, status)
+    req = urllib.request.Request(URL.rsplit("/mcp", 1)[0] + "/", method="HEAD")
+    try:
+        resp = urllib.request.urlopen(req, timeout=10)
+        check("HEAD -> 404", resp.status == 404, resp.status)
+    except urllib.error.HTTPError as e:
+        check("HEAD -> 404", e.code == 404, e.code)
+
     print("\n" + "=" * 56)
     print(f"结果: {PASS}/{PASS + len(FAIL)} 通过")
     for name, detail in FAIL:

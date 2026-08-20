@@ -381,7 +381,7 @@ Repository: [github.com/SMWHff/vb6-mcp-sdk](https://github.com/SMWHff/vb6-mcp-sd
 - **Tech stack**: VB6 (32-bit) + Win32 API + VBJSON (pure-VB6 JSON library) — no third-party VB6 controls
 - **Contributing**:
   - Add example tools: implement `ITool` / `IPrompt` / `IResource` / `ITemplate`, follow the templates under `tools/`
-  - Fix bugs: make sure `tests/test-suite.py` (41 cases) + `tests/http-test.py` (17 checks) pass before submitting
+  - Fix bugs: make sure `tests/test-suite.py` (53 cases) + `tests/http-test.py` (22 checks) pass before submitting
   - Commit style: Conventional Commits (`feat(scope): description`)
 - **Testing**: full verification against the official Python SDK over both transports (stdio + Streamable HTTP) plus raw-protocol error cases (which catch what official clients miss)
 - **Related resources**: [MCP specification](https://modelcontextprotocol.io/) · [Python SDK](https://github.com/modelcontextprotocol/python-sdk) · [Inspector](https://github.com/modelcontextprotocol/inspector)

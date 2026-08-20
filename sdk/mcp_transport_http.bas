@@ -94,6 +94,7 @@ Public Function HttpReadRequest(ByVal conn As Long, ByRef method As String, ByRe
     If sp1 > 0 And sp2 > 0 Then
         method = Left$(line, sp1 - 1)
         path = Mid$(line, sp1 + 1, sp2 - sp1 - 1)
+        If InStr(path, "?") > 0 Then path = Left$(path, InStr(path, "?") - 1)
     Else
         Exit Function
     End If

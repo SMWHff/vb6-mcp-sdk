@@ -118,6 +118,11 @@ async def sdk_session_cases():
             record("工具", "rand 参数错误 isError", r.is_error is True and "max" in r.content[0].text,
                    r.content[0].text[:40])
 
+            r = await session.call_tool("add", {"a": "x", "b": 1})
+            record("工具", "add 类型错误 -> isError", r.is_error is True, r.content[0].text[:40])
+            r = await session.call_tool("add", {"a": 1, "b": 2, "c": 99})
+            record("工具", "额外参数忽略", r.content[0].text == "3", r.content[0].text)
+
             # ---- Prompts ----
             prompts = await session.list_prompts()
             record("提示词", "prompts/list 含 code_review",
@@ -204,6 +209,37 @@ def raw_cases():
     line = p.stdout.readline().decode("utf-8", errors="replace").strip()
     p.wait(timeout=10)
     record("裸协议", "CRLF 行尾兼容", '"id":1' in line and '"result"' in line, line)
+
+    # ---- 边界与健壮性（参考官方 SDK 测试的输入覆盖）----
+    out = raw_run([""])
+    record("裸协议", "空消息 -> 无响应", len(out) == 0, str(out))
+
+    out = raw_run(['{"jsonrpc":"2.0","id":1,"method":"ping"'])
+    record("裸协议", "截断 JSON -> -32700", any('"code":-32700' in o for o in out), str(out))
+
+    out = raw_run(['{"jsonrpc":"2.0","id":1,"method":"ping"} garbage'])
+    record("裸协议", "尾随垃圾宽容处理", any('"id":1' in o and '"result"' in o for o in out), str(out))
+
+    out = raw_run(['{"jsonrpc":"2.0","id":1.5,"method":"ping"}'])
+    record("裸协议", "浮点 id 回显", any('"id":1.5' in o for o in out), str(out))
+
+    out = raw_run(['{"jsonrpc":"2.0","id":null,"method":"ping"}'])
+    record("裸协议", "null id 回显", any('"id":null' in o and '"result"' in o for o in out), str(out))
+
+    out = raw_run(['[{"jsonrpc":"2.0","id":1,"method":"ping"}]'])
+    record("裸协议", "batch 数组 -> -32601", any('"code":-32601' in o for o in out), str(out))
+
+    out = raw_run(['{"jsonrpc":"2.0","id":1,"method":"PING"}'])
+    record("裸协议", "方法名区分大小写", any('"code":-32601' in o for o in out), str(out))
+
+    out = raw_run(['{"jsonrpc":"2.0","id":1,"method":"ping","extra":{"x":1}}'])
+    record("裸协议", "未知字段忽略", any('"id":1' in o and '"result"' in o for o in out), str(out))
+
+    out = raw_run(['\ufeff{"jsonrpc":"2.0","id":1,"method":"ping"}'])
+    record("裸协议", "BOM 前缀正常", any('"id":1' in o and '"result"' in o for o in out), str(out))
+
+    out = raw_run(['{"jsonrpc":"2.0","id":999999999999,"method":"ping"}'])
+    record("裸协议", "超大 id 回显", any('"id":999999999999' in o for o in out), str(out))
 
 
 # ==================== 汇总 ====================
