@@ -90,6 +90,9 @@ async def sdk_session_cases():
             except Exception as _e:
                 record("工具", "json_build 返回合法 JSON", False, str(_e))
 
+            r = await session.call_tool("json_build", {"mode": "empty"})
+            record("工具", "json_build 空参数返回 {}", r.content[0].text == "{}", r.content[0].text)
+
             try:
                 await session.call_tool("no_such_tool", {})
                 record("工具", "未知工具 -> error", False, "未报错")
