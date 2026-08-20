@@ -388,4 +388,10 @@ Repository: [github.com/SMWHff/vb6-mcp-sdk](https://github.com/SMWHff/vb6-mcp-sd
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=SMWHff/vb6-mcp-sdk&type=Date)](https://www.star-history.com/?repos=SMWHff%2Fvb6-mcp-sdk&type=timeline&logscale=&legend=top-left)
+<a href="https://www.star-history.com/?repos=SMWHff%2Fvb6-mcp-sdk&type=timeline&logscale=&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=SMWHff/vb6-mcp-sdk&type=timeline&theme=dark&logscale&legend=top-left&sealed_token=8lEBCwZdiL8GlGtz3Rj-Akv9rPBsQlHSKgQEbQsDlnPlK7Q6CSQocCQ4mIB2ke2rVfNaya-AsEkHsHNg2VkRmWqXkBLJzkmnAwUAnKLZ3yXwFoB1tvO0JuTz8CzIkHT5L8u-Tr9NesCK5Zhooyz3ZWh0FWeAstxSrkPULKdA7kySDbv0UI6MXvnEo2WI" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=SMWHff/vb6-mcp-sdk&type=timeline&logscale&legend=top-left&sealed_token=8lEBCwZdiL8GlGtz3Rj-Akv9rPBsQlHSKgQEbQsDlnPlK7Q6CSQocCQ4mIB2ke2rVfNaya-AsEkHsHNg2VkRmWqXkBLJzkmnAwUAnKLZ3yXwFoB1tvO0JuTz8CzIkHT5L8u-Tr9NesCK5Zhooyz3ZWh0FWeAstxSrkPULKdA7kySDbv0UI6MXvnEo2WI" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=SMWHff/vb6-mcp-sdk&type=timeline&logscale&legend=top-left&sealed_token=8lEBCwZdiL8GlGtz3Rj-Akv9rPBsQlHSKgQEbQsDlnPlK7Q6CSQocCQ4mIB2ke2rVfNaya-AsEkHsHNg2VkRmWqXkBLJzkmnAwUAnKLZ3yXwFoB1tvO0JuTz8CzIkHT5L8u-Tr9NesCK5Zhooyz3ZWh0FWeAstxSrkPULKdA7kySDbv0UI6MXvnEo2WI" />
+ </picture>
+</a>
