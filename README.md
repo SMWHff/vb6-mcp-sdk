@@ -381,7 +381,13 @@ npx @modelcontextprotocol/inspector .\vb6-mcp-sdk.exe
 - **技术栈**：VB6（32 位）+ Win32 API + VBJSON（纯 VB6 JSON 库）——无任何第三方 VB6 控件依赖
 - **贡献方式**：
   - 新增示例工具：实现 `ITool` / `IPrompt` / `IResource` 接口，参考 `tools/` 下的模板
-  - 修复 bug：跑通 `tests/test-suite.py`（33 用例）+ `tests/http-test.py`（13 项）后再提交
+  - 修复 bug：跑通 `tests/test-suite.py`（36 用例）+ `tests/http-test.py`（13 项）后再提交
   - 提交规范：Conventional Commits（`feat(scope): 描述`，描述用中文）
 - **测试**：官方 Python SDK（stdio + Streamable HTTP 双传输）全链路验证 + 裸协议错误用例（能抓到官方客户端测不出的问题）
 - **相关资源**：[MCP 官方规范](https://modelcontextprotocol.io/) · [Python SDK](https://github.com/modelcontextprotocol/python-sdk) · [Inspector 调试器](https://github.com/modelcontextprotocol/inspector)
+
+---
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=SMWHff/vb6-mcp-sdk&type=Date)](https://star-history.com/#SMWHff/vb6-mcp-sdk&Date)
