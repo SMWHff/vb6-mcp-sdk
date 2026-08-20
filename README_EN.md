@@ -20,7 +20,7 @@ You write = tool classes (Implements ITool) + prompt classes (Implements IPrompt
 
 - 🧩 **Protocol engine**: Full JSON-RPC 2.0 + MCP lifecycle (initialize / notifications / ping), compatible with the 2024-11-05 revision and 2025-series clients
 - 🔌 **Dual transports**: stdio (spawned by Claude Desktop / Cursor, etc.) and Streamable HTTP (self-implemented with Winsock, zero third-party dependencies)
-- 🧰 **Three capabilities**: Tools / Prompts / Resources fully supported — implement an interface, register it, done
+- 🧰 **Four capabilities**: Tools / Prompts / Resources / **Resource Templates** fully supported — implement an interface, register it, done
 - 🔤 **Chinese-friendly**: UTF-8 end-to-end encoding; ASCII tool names with Chinese descriptions and results
 - 🛡️ **Error semantics**: tool errors automatically become `isError` results; missing required arguments are validated automatically (-32602) so the AI client sees readable error text
 - 📦 **Zero dependencies**: VB6 + Win32 API + VBJSON (pure VB6 JSON library) only, no third-party VB6 controls
@@ -35,8 +35,9 @@ vb6-mcp-sdk\
 ├── sdk\                        ← SDK core (reuse, usually no changes needed)
 │   ├── ITool.cls               ← Tool interface
 │   ├── IPrompt.cls             ← Prompt template interface
-│   ├── IResource.cls           ← Resource interface
-│   ├── McpServer.cls           ← Server class: register/dispatch the three capabilities, start transports
+│   ├── ITemplate.cls            ← Resource Template interface (dynamic URI, e.g. demo://greet/{name})
+│   ├── IResource.cls            ← Resource interface
+│   ├── McpServer.cls            ← Server class: register/dispatch the four capabilities, start transports
 │   ├── mcp_transport_stdio.bas ← stdio transport (kernel32 framing + UTF-8)
 │   ├── mcp_transport_http.bas  ← Streamable HTTP transport (Winsock API)
 │   ├── mcp_json.bas            ← JSON utilities (JsonGet/JsonQuote/JsonBuild, pure VB6 VBJSON)
@@ -153,15 +154,16 @@ Done. Your tool is now a standard MCP server.
 
 ---
 
-## The Three Capability Interfaces
+## The Four Capability Interfaces
 
-MCP defines three capabilities; the SDK provides one interface for each, all registered via `server.RegisterXxx`:
+MCP defines the core capabilities; the SDK provides one interface for each, all registered via `server.RegisterXxx`:
 
 | Capability | Interface | Registration | Client calls |
 |---|---|---|---|
 | Tools | `ITool` | `RegisterTool New YourClass` | `tools/list`, `tools/call` |
 | Prompts | `IPrompt` | `RegisterPrompt New YourClass` | `prompts/list`, `prompts/get` |
 | Resources | `IResource` | `RegisterResource New YourClass` | `resources/list`, `resources/read` |
+| Resource Templates | `ITemplate` | `RegisterTemplate New YourClass` | `resources/templates/list`, `resources/read` (dynamic URI) |
 
 ### IPrompt (prompt template)
 
@@ -378,8 +380,8 @@ Repository: [github.com/SMWHff/vb6-mcp-sdk](https://github.com/SMWHff/vb6-mcp-sd
 - **Version**: 1.0.0 (protocol 2024-11-05; compatible with 2025-03-26 / 2025-06-18 clients)
 - **Tech stack**: VB6 (32-bit) + Win32 API + VBJSON (pure-VB6 JSON library) — no third-party VB6 controls
 - **Contributing**:
-  - Add example tools: implement `ITool` / `IPrompt` / `IResource`, follow the templates under `tools/`
-  - Fix bugs: make sure `tests/test-suite.py` (36 cases) + `tests/http-test.py` (13 checks) pass before submitting
+  - Add example tools: implement `ITool` / `IPrompt` / `IResource` / `ITemplate`, follow the templates under `tools/`
+  - Fix bugs: make sure `tests/test-suite.py` (38 cases) + `tests/http-test.py` (13 checks) pass before submitting
   - Commit style: Conventional Commits (`feat(scope): description`)
 - **Testing**: full verification against the official Python SDK over both transports (stdio + Streamable HTTP) plus raw-protocol error cases (which catch what official clients miss)
 - **Related resources**: [MCP specification](https://modelcontextprotocol.io/) · [Python SDK](https://github.com/modelcontextprotocol/python-sdk) · [Inspector](https://github.com/modelcontextprotocol/inspector)

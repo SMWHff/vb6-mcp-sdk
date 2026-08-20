@@ -33,8 +33,8 @@ async def sdk_session_cases():
     async with stdio_client(server) as (read, write):
         async with ClientSession(read, write) as session:
             init = await session.initialize()
-            record("握手", "initialize 协议版本 2024-11-05",
-                   init.protocol_version == "2024-11-05", init.protocol_version)
+            record("握手", "initialize 协议版本协商",
+                   init.protocol_version in ("2024-11-05", "2025-03-26", "2025-06-18"), init.protocol_version)
             record("握手", "serverInfo 名称与版本",
                    init.server_info.name == "vb6-mcp-sdk-demo" and init.server_info.version == "1.0.0",
                    f"{init.server_info.name} {init.server_info.version}")
@@ -128,6 +128,14 @@ async def sdk_session_cases():
             rr = await session.read_resource("demo://server/info")
             record("资源", "resources/read 返回内容", "vb6-mcp-sdk-demo" in rr.contents[0].text,
                    rr.contents[0].text.splitlines()[0])
+
+            # ---- Resource Templates ----
+            tpls = await session.list_resource_templates()
+            tpl_uris = [t.uri_template for t in tpls.resource_templates]
+            record("资源", "templates/list 含 greet 模板", "demo://greet/{name}" in tpl_uris, str(tpl_uris))
+            rt = await session.read_resource("demo://greet/张三")
+            record("资源", "模板 read 动态解析", "你好，张三！" in rt.contents[0].text, rt.contents[0].text)
+
             try:
                 await session.read_resource("demo://no/such")
                 record("资源", "未知资源 -> 错误", False, "未报错")

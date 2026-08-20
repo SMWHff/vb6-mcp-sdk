@@ -18,9 +18,9 @@
 
 ## 特性
 
-- 🧩 **协议引擎**：完整 JSON-RPC 2.0 + MCP 生命周期（initialize / notifications / ping），兼容 2024-11-05 及 2025 系列客户端
+- 🧩 **协议引擎**：完整 JSON-RPC 2.0 + MCP 生命周期（initialize / notifications / ping），**协议版本协商**（支持 2024-11-05 / 2025-03-26 / 2025-06-18）
 - 🔌 **双传输**：stdio（被 Claude Desktop / Cursor 等拉起）与 Streamable HTTP（Winsock 自实现，零第三方依赖）
-- 🧰 **三大能力**：Tools / Prompts / Resources 全覆盖，实现接口 + 注册即用
+- 🧰 **四大能力**：Tools / Prompts / Resources / **Resource Templates** 全覆盖，实现接口 + 注册即用
 - 🔤 **中文友好**：UTF-8 全链路编解码，工具名用 ASCII、描述与结果可中文
 - 🛡️ **错误语义**：工具抛错自动转 `isError` 结果、缺参自动校验（-32602），AI 端可见错误文本
 - 📦 **零依赖**：仅 VB6 + Win32 API + 纯 VB6 JSON 库（VBJSON），无任何第三方 VB6 控件
@@ -35,8 +35,9 @@ vb6-mcp-sdk\
 ├── sdk\                        ← SDK 核心（复用，一般不需要改）
 │   ├── ITool.cls               ← 工具接口
 │   ├── IPrompt.cls             ← 提示词模板接口
-│   ├── IResource.cls           ← 资源接口
-│   ├── McpServer.cls           ← 服务器类：注册/分派三大能力、双传输启动
+│   ├── ITemplate.cls            ← 资源模板接口（动态 URI，如 demo://greet/{name}）
+│   ├── IResource.cls            ← 资源接口
+│   ├── McpServer.cls            ← 服务器类：注册/分派四大能力、双传输启动
 │   ├── mcp_transport_stdio.bas ← stdio 传输层（kernel32 分帧 + UTF-8）
 │   ├── mcp_transport_http.bas  ← Streamable HTTP 传输层（Winsock API）
 │   ├── mcp_json.bas            ← JSON 工具（JsonGet/JsonQuote/JsonBuild，纯 VB6 VBJSON）
@@ -50,7 +51,8 @@ vb6-mcp-sdk\
 │   ├── ToolReadFile.cls        ← 示例工具：白名单安全读文件
 │   ├── ToolWordCount.cls       ← 示例工具：文本统计（演示 isError）
 │   ├── SamplePrompt.cls        ← 示例提示词（代码审查助手）
-│   └── SampleResource.cls      ← 示例资源（服务器信息）
+│   ├── SampleResource.cls      ← 示例资源（服务器信息）
+│   └── SampleTemplate.cls      ← 示例资源模板（demo://greet/{name} 动态问候）
 ├── mcp_main.bas                   ← 入口：创建 server、注册能力、启动
 ├── vb6-mcp-sdk.vbp              ← 工程文件（双击打开）
 ├── README.md                   ← 中文文档
@@ -155,15 +157,16 @@ server.RegisterTool New ToolGreeting
 
 ---
 
-## 三大能力接口
+## 四大能力接口
 
-MCP 定义了三种能力，SDK 各提供一个接口，全部通过 `server.RegisterXxx` 注册：
+MCP 定义了核心能力，SDK 各提供一个接口，全部通过 `server.RegisterXxx` 注册：
 
 | 能力 | 接口 | 注册 | 客户端调用 |
 |---|---|---|---|
 | Tools 工具 | `ITool` | `RegisterTool New 你的类` | `tools/list`、`tools/call` |
 | Prompts 提示词 | `IPrompt` | `RegisterPrompt New 你的类` | `prompts/list`、`prompts/get` |
 | Resources 资源 | `IResource` | `RegisterResource New 你的类` | `resources/list`、`resources/read` |
+| Resource Templates 模板 | `ITemplate` | `RegisterTemplate New 你的类` | `resources/templates/list`、`resources/read`（动态 URI） |
 
 ### IPrompt（提示词模板）
 
@@ -380,8 +383,8 @@ npx @modelcontextprotocol/inspector .\vb6-mcp-sdk.exe
 - **版本**：1.0.0（协议 2024-11-05，兼容 2025-03-26 / 2025-06-18 客户端）
 - **技术栈**：VB6（32 位）+ Win32 API + VBJSON（纯 VB6 JSON 库）——无任何第三方 VB6 控件依赖
 - **贡献方式**：
-  - 新增示例工具：实现 `ITool` / `IPrompt` / `IResource` 接口，参考 `tools/` 下的模板
-  - 修复 bug：跑通 `tests/test-suite.py`（36 用例）+ `tests/http-test.py`（13 项）后再提交
+  - 新增示例工具：实现 `ITool` / `IPrompt` / `IResource` / `ITemplate` 接口，参考 `tools/` 下的模板
+  - 修复 bug：跑通 `tests/test-suite.py`（38 用例）+ `tests/http-test.py`（13 项）后再提交
   - 提交规范：Conventional Commits（`feat(scope): 描述`，描述用中文）
 - **测试**：官方 Python SDK（stdio + Streamable HTTP 双传输）全链路验证 + 裸协议错误用例（能抓到官方客户端测不出的问题）
 - **相关资源**：[MCP 官方规范](https://modelcontextprotocol.io/) · [Python SDK](https://github.com/modelcontextprotocol/python-sdk) · [Inspector 调试器](https://github.com/modelcontextprotocol/inspector)

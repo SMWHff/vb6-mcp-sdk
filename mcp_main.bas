@@ -26,6 +26,7 @@ Public Sub Main()
     server.RegisterTool New ToolGetTime
     server.RegisterPrompt New SamplePrompt
     server.RegisterResource New SampleResource
+    server.RegisterTemplate New SampleTemplate
     server.RegisterTool New ToolSysInfo
     server.RegisterTool New ToolReadFile
     server.RegisterTool New ToolWordCount

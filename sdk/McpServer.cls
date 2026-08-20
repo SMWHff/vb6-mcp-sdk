@@ -16,7 +16,10 @@ Attribute VB_Exposed = False
 ' ============================================================
 Option Explicit
 
-Private Const PROTOCOL_VERSION As String = "2024-11-05"
+Private Const PROTOCOL_VERSION As String = "2024-11-05"   ' fallback
+' Server-supported protocol revisions (highest first)
+Private Const PV_2025_06 As String = "2025-06-18"
+Private Const PV_2025_03 As String = "2025-03-26"
 
 Private Declare Function GetConsoleWindow Lib "kernel32" () As Long
 Private Declare Function ShowWindow Lib "user32" (ByVal hwnd As Long, ByVal nCmdShow As Long) As Long
@@ -25,6 +28,7 @@ Private Const SW_HIDE As Long = 0
 Private m_tools As Collection
 Private m_prompts As Collection
 Private m_resources As Collection
+Private m_templates As Collection
 Private m_serverName As String
 Private m_serverVersion As String
 
@@ -32,6 +36,7 @@ Private Sub Class_Initialize()
     Set m_tools = New Collection
     Set m_prompts = New Collection
     Set m_resources = New Collection
+    Set m_templates = New Collection
     m_serverName = "vb6-mcp-sdk"
     m_serverVersion = "1.0.0"
 End Sub
@@ -56,6 +61,10 @@ Public Sub RegisterResource(ByVal resource As IResource)
     m_resources.Add resource
 End Sub
 
+Public Sub RegisterTemplate(ByVal t As ITemplate)
+    m_templates.Add t
+End Sub
+
 Public Property Get ToolCount() As Long
     ToolCount = m_tools.Count
 End Property
@@ -66,6 +75,10 @@ End Property
 
 Public Property Get ResourceCount() As Long
     ResourceCount = m_resources.Count
+End Property
+
+Public Property Get TemplateCount() As Long
+    TemplateCount = m_templates.Count
 End Property
 
 ' ===================== 传输模式 =====================
@@ -141,8 +154,12 @@ Public Function HandleMessage(ByVal json As String) As String
 
     Select Case method
     Case "initialize"
+        Dim clientVer As String
+        clientVer = CStr(JsonGet(json, ".params.protocolVersion"))
+        Dim selVer As String
+        selVer = SelectProtocolVersion(clientVer)
         HandleMessage = "{""jsonrpc"":""2.0"",""id"":" & idText & ",""result"":{" _
-            & """protocolVersion"":""" & PROTOCOL_VERSION & """," _
+            & """protocolVersion"":""" & selVer & """," _
             & """capabilities"":{""tools"":{""listChanged"":false},""prompts"":{},""resources"":{}}," _
             & """serverInfo"":{""name"":""" & m_serverName & """,""version"":""" & m_serverVersion & """}}}"
 
@@ -160,6 +177,9 @@ Public Function HandleMessage(ByVal json As String) As String
 
     Case "prompts/get"
         HandleMessage = CallPrompt(json, idText)
+
+    Case "resources/templates/list"
+        HandleMessage = "{""jsonrpc"":""2.0"",""id"":" & idText & ",""result"":{""resourceTemplates"":[" & BuildTemplatesList() & "]}}"
 
     Case "resources/list"
         HandleMessage = "{""jsonrpc"":""2.0"",""id"":" & idText & ",""result"":{""resources"":[" & BuildResourcesList() & "]}}"
@@ -280,6 +300,18 @@ End Function
 Private Function ReadResourceValue(ByVal json As String, ByVal idText As String) As String
     Dim uri As String
     uri = CStr(JsonGet(json, ".params.uri"))
+    Dim t As ITemplate
+    For Each t In m_templates
+        If MatchTemplate(uri, t) Then
+            On Error GoTo TplErr
+            Dim tText As String
+            tText = t.ResolveText(uri)
+            ReadResourceValue = "{""jsonrpc"":""2.0"",""id"":" & idText & ",""result"":{""contents"":[" _
+                & "{""uri"":""" & uri & """,""mimeType"":""" & t.TemplateMimeType & """," _
+                & """text"":" & JsonQuote(tText) & "}]}}"
+            Exit Function
+        End If
+    Next t
     Dim r As IResource
     For Each r In m_resources
         If r.ResourceUri = uri Then
@@ -298,6 +330,9 @@ Private Function ReadResourceValue(ByVal json As String, ByVal idText As String)
 ResErr:
     ReadResourceValue = "{""jsonrpc"":""2.0"",""id"":" & idText & ",""error"":{""code"":-32602," _
         & """message"":" & JsonQuote("资源读取失败: " & Err.Description) & "}}"
+TplErr:
+    ReadResourceValue = "{""jsonrpc"":""2.0"",""id"":" & idText & ",""error"":{""code"":-32602," _
+        & """message"":" & JsonQuote("模板解析失败: " & Err.Description) & "}}"
 End Function
 
 ' ===================== HTTP 连接 =====================
@@ -335,3 +370,44 @@ Private Sub HideConsole()
     h = GetConsoleWindow()
     If h <> 0 Then Call ShowWindow(h, SW_HIDE)
 End Sub
+
+
+' ===================== Templates 内部 =====================
+
+Private Function BuildTemplatesList() As String
+    Dim list As String
+    list = ""
+    Dim t As ITemplate
+    For Each t In m_templates
+        If Len(list) > 0 Then list = list & ","
+        list = list & "{""uriTemplate"":""" & t.UriTemplate & """," _
+            & """name"":" & JsonQuote(t.TemplateName) & "," _
+            & """description"":" & JsonQuote(t.TemplateDescription) & "," _
+            & """mimeType"":""" & t.TemplateMimeType & """}"
+    Next t
+    BuildTemplatesList = list
+End Function
+
+' uri 是否匹配模板（比较 { 之前的静态前缀）
+Private Function MatchTemplate(ByVal uri As String, ByVal t As ITemplate) As Boolean
+    Dim tp As String
+    tp = t.UriTemplate
+    Dim brace As Long
+    brace = InStr(tp, "{")
+    Dim staticLen As Long
+    If brace > 0 Then staticLen = brace - 1 Else staticLen = Len(tp)
+    If Len(uri) >= staticLen And Left$(uri, staticLen) = Left$(tp, staticLen) Then
+        MatchTemplate = True
+    End If
+End Function
+
+' 协议版本协商：返回服务器支持的、不超过客户端版本的最高版本
+Private Function SelectProtocolVersion(ByVal clientVer As String) As String
+    If clientVer >= PV_2025_06 Then
+        SelectProtocolVersion = PV_2025_06
+    ElseIf clientVer >= PV_2025_03 Then
+        SelectProtocolVersion = PV_2025_03
+    Else
+        SelectProtocolVersion = PROTOCOL_VERSION
+    End If
+End Function
