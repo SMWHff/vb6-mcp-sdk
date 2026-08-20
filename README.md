@@ -57,7 +57,9 @@ vb6-mcp-sdk\
 ├── README_EN.md                ← English docs
 ├── run_test.bat                ← 一键测试启动器（自动编译 VB6 / 自装依赖 / 全量测试 / 日志输出 logs\）
 ├── scripts\                    ← 构建 / 部署脚本
-│   └── fix-console.ps1         ← 编译后必跑（GUI→Console 子系统）
+│   ├── fix-console.ps1         ← 编译后必跑（GUI→Console 子系统）
+│   ├── fix-vb6ext.ps1          ← 修复 VB6「不能 VB6EXT.OLB 注册」弹窗
+│   └── utf8-to-gbk.ps1         ← VB6 源码 UTF-8（含 BOM）转 GBK，防中文乱码
 └── tests\                      ← 测试用例
     ├── test.ps1                ← stdio 冒烟测试
     ├── test-suite.py           ← ★ stdio 全面测试套件（33 用例）
