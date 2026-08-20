@@ -1,3 +1,4 @@
+Attribute VB_Name = "mcp_json"
 ' ============================================================
 ' mcp_json.bas -- SDK JSON utilities (pure VB6 via VBJSON)
 ' Replaces the old MSScriptControl + json-polyfill.js approach.
@@ -85,6 +86,7 @@ Public Function JsonQuote(ByVal s As String) As String
     s = Replace(s, ChrW(&H2029), "\u2029")
     JsonQuote = """" & s & """"
 End Function
+
 ' Build a JSON object string from key/value pairs:
 '   JsonBuild("name", "vb6", "count", 3, "ok", True)
 '   -> {"name":"vb6","count":3,"ok":true}
@@ -172,8 +174,8 @@ Private Function ParseCached(ByVal s As String) As Object
         Set ParseCached = m_cachedObj
     Else
         Set m_cachedObj = Nothing
-        Set m_cachedObj = JSON.parse(s)
-        If Len(JSON.GetParserErrors()) > 0 Then Set m_cachedObj = Nothing
+        Set m_cachedObj = json.parse(s)
+        If Len(json.GetParserErrors()) > 0 Then Set m_cachedObj = Nothing
         m_cachedJson = s
         Set ParseCached = m_cachedObj
     End If

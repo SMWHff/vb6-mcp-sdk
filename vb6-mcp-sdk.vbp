@@ -19,6 +19,7 @@ Class=ToolSysInfo; tools\ToolSysInfo.cls
 Class=ToolReadFile; tools\ToolReadFile.cls
 Class=ToolWordCount; tools\ToolWordCount.cls
 Class=cStringBuilder; sdk\json\cStringBuilder.cls
+Class=ToolJsonBuild; tools\ToolJsonBuild.cls
 Startup="Sub Main"
 ExeName32="vb6-mcp-sdk.exe"
 Command32=""

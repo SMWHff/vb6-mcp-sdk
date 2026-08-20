@@ -29,6 +29,7 @@ Public Sub Main()
     server.RegisterTool New ToolSysInfo
     server.RegisterTool New ToolReadFile
     server.RegisterTool New ToolWordCount
+    server.RegisterTool New ToolJsonBuild
 
     ' ===== 启动（按命令行参数选传输）=====
     If LCase$(Command$) Like "*http*" Then

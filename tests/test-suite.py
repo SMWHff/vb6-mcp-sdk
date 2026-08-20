@@ -1,4 +1,4 @@
-﻿# test-suite.py —— vb6-mcp-sdk 全面测试套件（官方 SDK + 裸 stdio 协议错误）
+# test-suite.py —— vb6-mcp-sdk 全面测试套件（官方 SDK + 裸 stdio 协议错误）
 # 用法：uv run --with mcp python scripts/test-suite.py
 # 前置：已编译 vb6-mcp-sdk.exe 且跑过 fix-console.ps1（GUI 子系统下裸管道读不到输出）
 import asyncio
@@ -48,7 +48,7 @@ async def sdk_session_cases():
             # ---- Tools ----
             tools = await session.list_tools()
             names = [t.name for t in tools.tools]
-            record("工具", "tools/list 返回 6 个工具", len(tools.tools) == 6, str(names))
+            record("工具", "tools/list 返回 7 个工具", len(tools.tools) == 7, str(names))
             record("工具", "工具字段完整",
                    all(t.name and t.description and t.input_schema.get("type") == "object" for t in tools.tools))
 
@@ -77,6 +77,18 @@ async def sdk_session_cases():
             r = await session.call_tool("word_count", {"text": "你好 MCP SDK\n第二行"})
             txt = r.content[0].text
             record("工具", "word_count 统计", "字数: 4" in txt and "行数: 2" in txt, txt.replace("\n", "|"))
+
+            r = await session.call_tool("json_build", {})
+            jb = r.content[0].text
+            try:
+                pj = json.loads(jb)
+                record("工具", "json_build 返回合法 JSON", isinstance(pj, dict), jb[:60])
+                record("工具", "json_build 类型正确",
+                       pj.get("name") == "vb6" and pj.get("count") == 3 and pj.get("ratio") == 3.5
+                       and pj.get("ok") is True and pj.get("no") is False and pj.get("nil") is None
+                       and isinstance(pj.get("nested"), dict) and pj["nested"].get("a") == 1, jb[:80])
+            except Exception as _e:
+                record("工具", "json_build 返回合法 JSON", False, str(_e))
 
             try:
                 await session.call_tool("no_such_tool", {})
