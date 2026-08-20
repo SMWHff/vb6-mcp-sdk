@@ -101,11 +101,17 @@ echo ============================================================
 echo [3/3] 测试开始（5 组）
 echo ============================================================
 
-rem ---- 测试 1：stdio 冒烟 ----
+rem ---- 测试 1：stdio 冒烟（裸管道）----
 echo.
 echo ----- [1/5] 冒烟测试（stdio，10 条消息 / 13 项断言）-----
 %PS% -File "%ROOT%tests\test.ps1"
 if errorlevel 1 (echo [结果] 冒烟测试：失败 & set /a TFAIL+=1) else (echo [结果] 冒烟测试：通过 & set /a TPASS+=1)
+
+rem ---- 测试 1b：官方 SDK 冒烟（参考 Python SDK 测试，19 项断言）----
+echo.
+echo ----- [1b/5] 官方 SDK 冒烟（stdio，19 项断言）-----
+"%UV%" run --with mcp python "%ROOT%tests\smoke-sdk.py"
+if errorlevel 1 (echo [结果] SDK 冒烟：失败 & set /a TFAIL+=1) else (echo [结果] SDK 冒烟：通过 & set /a TPASS+=1)
 
 rem ---- 测试 2：全面测试套件（85 用例，需 mcp 包，首次自动下载）----
 echo.

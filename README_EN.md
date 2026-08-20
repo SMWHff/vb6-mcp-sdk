@@ -67,6 +67,7 @@ vb6-mcp-sdk\
 │   └── fix-console.ps1         ← Must run after every compile (GUI→Console subsystem)
 └── tests\
     ├── test.ps1                ← stdio smoke test (10 messages / 13 structured assertions)
+    ├── smoke-sdk.py            ← ★ official Python SDK smoke (SDK-test assert style, 19 checks, both transports)
     ├── test-suite.py           ← ★ full stdio test suite (85 cases)
     ├── http-test.py            ← ★ HTTP transport tests (33 checks)
     ├── coverage.py             ← ★ black-box coverage (tools/prompts/resources/templates/methods)
@@ -297,13 +298,17 @@ Once compiled, register the exe in any MCP client.
 
 ## Verification & Testing
 
-**One-click**: `.\run_test.bat` — auto-checks/installs uv, auto-compiles with VB6 when the exe is missing, runs fix-console, then executes all 5 test groups, and **finally prints two coverage reports automatically**: a black-box report (`tests/coverage.py` covers tools/prompts/resources/templates/methods) plus a white-box report (`tests/coverage-whitebox.py` does procedure-level call-graph analysis over all VB6 sources, **counting self-written code only — the VBJSON third-party library (sdk/json/) is excluded**, and host-facing counter properties are listed as exempted items; currently 100%); the full output goes to the console and a `logs\run_test_*.log` file at the same time. Exit codes: 0=all passed / 1=failures / 2=environment not ready.
+**One-click**: `.\run_test.bat` — auto-checks/installs uv, auto-compiles with VB6 when the exe is missing, runs fix-console, then executes 6 test groups (smoke 13 assertions + SDK smoke 19 assertions + 85-case full suite + 33 HTTP checks + official SDK both transports), and **finally prints two coverage reports automatically**: a black-box report (`tests/coverage.py` covers tools/prompts/resources/templates/methods) plus a white-box report (`tests/coverage-whitebox.py` does procedure-level call-graph analysis over all VB6 sources, **counting self-written code only — the VBJSON third-party library (sdk/json/) is excluded**, and host-facing counter properties are listed as exempted items; currently 100%); the full output goes to the console and a `logs\run_test_*.log` file at the same time. Exit codes: 0=all passed / 1=failures / 2=environment not ready.
 
 Or run each test individually:
 
 ```powershell
-# 1) Smoke test (stdio, 5 messages)
+# 1) Smoke test (stdio, 10 messages / 13 assertions)
 pwsh .\tests\test.ps1
+
+# 1b) ★ Official Python SDK smoke (SDK-test assert style, 19 checks; pass a URL to also run HTTP)
+uv run --with mcp python .\tests\smoke-sdk.py
+uv run --with mcp python .\tests\smoke-sdk.py http://localhost:9000/mcp
 
 # 2) ★ Full test suite (stdio, 85 cases: handshake/tools/prompts/resources/security/raw protocol errors/robustness)
 uv run --with mcp python .\tests\test-suite.py

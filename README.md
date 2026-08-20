@@ -69,6 +69,7 @@ vb6-mcp-sdk\
 │   └── utf8-to-gbk.ps1         ← VB6 源码 UTF-8（含 BOM）转 GBK，防中文乱码
 └── tests\                      ← 测试用例
     ├── test.ps1                ← stdio 冒烟测试（10 条消息 / 13 项结构化断言）
+    ├── smoke-sdk.py            ← ★ 官方 Python SDK 冒烟（参考 SDK 测试断言风格，19 项，双传输）
     ├── test-suite.py           ← ★ stdio 全面测试套件（85 用例）
     ├── http-test.py            ← ★ HTTP 传输层专项（33 项：会话/边界/三能力全链路/SSE）
     ├── coverage.py             ← ★ 测试用例覆盖率自动统计（工具/提示词/资源/模板/协议方法）
@@ -300,13 +301,17 @@ End Sub
 
 ## 验证
 
-**一键运行**：`.\run_test.bat` —— 自动检查/安装 uv、exe 缺失时自动调用 VB6 编译、跑 fix-console、执行全部 5 组测试，**并在最后自动输出两份覆盖率报告**：黑盒报告（`tests/coverage.py` 统计工具/提示词/资源/模板/协议方法）+ 白盒报告（`tests/coverage-whitebox.py` 对全部 VB6 源码做过程级调用图可达性分析，**只统计自研代码，VBJSON 第三方库（sdk/json/）排除**，宿主公开计数属性列为豁免项，当前 100%）；完整输出同时显示在控制台并记录到 `logs\run_test_*.log`。退出码：0=全部通过 / 1=有失败 / 2=环境未就绪。
+**一键运行**：`.\run_test.bat` —— 自动检查/安装 uv、exe 缺失时自动调用 VB6 编译、跑 fix-console、执行 6 组测试（冒烟 13 项断言 + SDK 冒烟 19 项断言 + 85 用例全面套件 + 33 项 HTTP 专项 + 官方 SDK 双传输），**并在最后自动输出两份覆盖率报告**：黑盒报告（`tests/coverage.py` 统计工具/提示词/资源/模板/协议方法）+ 白盒报告（`tests/coverage-whitebox.py` 对全部 VB6 源码做过程级调用图可达性分析，**只统计自研代码，VBJSON 第三方库（sdk/json/）排除**，宿主公开计数属性列为豁免项，当前 100%）；完整输出同时显示在控制台并记录到 `logs\run_test_*.log`。退出码：0=全部通过 / 1=有失败 / 2=环境未就绪。
 
 也可以单独执行各测试：
 
 ```powershell
 # 1) 冒烟测试（stdio，10 条消息 / 13 项断言：握手/ping/tools/prompts/resources/错误码/中文）
 pwsh .\tests\test.ps1
+
+# 1b) ★ 官方 Python SDK 冒烟（参考 SDK 测试断言风格，19 项；带 URL 参数则跑 HTTP 传输）
+uv run --with mcp python .\tests\smoke-sdk.py
+uv run --with mcp python .\tests\smoke-sdk.py http://localhost:9000/mcp
 
 # 2) ★ 全面测试套件（stdio，85 用例：握手/工具/提示词/资源/模板/安全/裸协议/边界/数据完整性/MES/协议扩展/健壮性）
 uv run --with mcp python .\tests\test-suite.py
