@@ -18,6 +18,7 @@ Class=SamplePrompt; tools\SamplePrompt.cls
 Class=SampleResource; tools\SampleResource.cls
 Class=SampleTemplate; tools\SampleTemplate.cls
 Class=ToolSysInfo; tools\ToolSysInfo.cls
+Class=ToolRand; tools\ToolRand.cls
 Class=ToolReadFile; tools\ToolReadFile.cls
 Class=ToolWordCount; tools\ToolWordCount.cls
 Class=cStringBuilder; sdk\json\cStringBuilder.cls

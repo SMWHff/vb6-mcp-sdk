@@ -48,7 +48,7 @@ async def sdk_session_cases():
             # ---- Tools ----
             tools = await session.list_tools()
             names = [t.name for t in tools.tools]
-            record("工具", "tools/list 返回 7 个工具", len(tools.tools) == 7, str(names))
+            record("工具", "tools/list 返回 8 个工具", len(tools.tools) == 8, str(names))
             record("工具", "工具字段完整",
                    all(t.name and t.description and t.input_schema.get("type") == "object" for t in tools.tools))
 
@@ -106,6 +106,17 @@ async def sdk_session_cases():
             r = await session.call_tool("read_file", {"path": "..\\..\\secret.txt"})
             record("工具", "工具抛错 -> isError", r.is_error is True and "执行失败" in r.content[0].text,
                    f"is_error={r.is_error}")
+
+            r = await session.call_tool("rand", {"min": 1, "max": 10})
+            record("工具", "rand 区间内", 1 <= int(r.content[0].text) <= 10, r.content[0].text)
+            vals = []
+            for _ in range(20):
+                r = await session.call_tool("rand", {"min": -5, "max": 5})
+                vals.append(int(r.content[0].text))
+            record("工具", "rand 负区间边界", all(-5 <= x <= 5 for x in vals), str(vals[:6]))
+            r = await session.call_tool("rand", {"min": 10, "max": 1})
+            record("工具", "rand 参数错误 isError", r.is_error is True and "max" in r.content[0].text,
+                   r.content[0].text[:40])
 
             # ---- Prompts ----
             prompts = await session.list_prompts()
