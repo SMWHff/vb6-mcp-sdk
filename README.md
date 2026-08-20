@@ -74,6 +74,7 @@ vb6-mcp-sdk\
     ├── coverage.py             ← ★ 测试用例覆盖率自动统计（工具/提示词/资源/模板/协议方法）
     ├── coverage-whitebox.py    ← ★ 白盒覆盖率自动统计（VB6 源码过程级调用图，仅自研代码，VBJSON 第三方库排除）
     ├── claude-mcp-test.py      ← ★ Claude Code（Anthropic CLI）MCP 兼容性：注册/连接/headless 调工具
+    ├── dsh-mcp-test.py         ← ★ DeepSeek Harness（DSH）MCP 兼容性：生成配置块 + 按 dsh-mcp-client 方式握手
     ├── client-sdk.py           ← 官方 Python SDK 握手（stdio）
     └── client-sdk-http.py      ← 官方 Python SDK 走 HTTP
 ```
@@ -325,6 +326,9 @@ npx @modelcontextprotocol/inspector .\vb6-mcp-sdk.exe
 
 # 7) ★ Claude Code（Anthropic CLI）MCP 兼容性（需已安装并登录 claude CLI）
 uv run python .\tests\claude-mcp-test.py
+
+# 8) ★ DeepSeek Harness（DSH）MCP 兼容性（生成 cordis 配置块 + 按 dsh-mcp-client 方式握手）
+uv run python .\tests\dsh-mcp-test.py
 ```
 
 **测试套件覆盖**（`test-suite.py` 85 用例）：握手 5（含 capabilities 订阅/日志/补全声明）· 工具 37（含负数/小数/特殊字符/10KB 长文本/未知工具/缺参/isError/数据完整性/MES 4 例/structuredContent 2 例）· 提示词 5 · 资源 6 · 安全 3（路径穿越/绝对路径/非法扩展名）· 裸协议 29（非法 JSON/未知方法/通知无响应/id 类型/CRLF/补全/日志/订阅/错误后恢复/版本协商边界/cursor/initialize 容错）。**裸协议用例能抓到官方 SDK 客户端测不出的问题**（如字符串 id 不带引号、`\uXXXX` 转义解析）——已两次真实发现并修复框架 bug。MES 用例依赖内网服务器 192.168.20.151（接口见教程文档），不可达时对应用例会报失败。

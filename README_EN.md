@@ -72,6 +72,7 @@ vb6-mcp-sdk\
     ├── coverage.py             ← ★ black-box coverage (tools/prompts/resources/templates/methods)
     ├── coverage-whitebox.py    ← ★ white-box coverage (VB6 source procedure-level call-graph, self-written code only; VBJSON third-party lib excluded)
     ├── claude-mcp-test.py      ← ★ Claude Code (Anthropic CLI) MCP compatibility: register/connect/headless tool call
+    ├── dsh-mcp-test.py         ← ★ DeepSeek Harness (DSH) MCP compatibility: config block + dsh-mcp-client-style handshake
     ├── client-sdk.py           ← official Python SDK handshake (stdio)
     └── client-sdk-http.py      ← official Python SDK over HTTP
 ```
@@ -322,6 +323,9 @@ npx @modelcontextprotocol/inspector .\vb6-mcp-sdk.exe
 
 # 7) ★ Claude Code (Anthropic CLI) MCP compatibility (requires installed & logged-in claude CLI)
 uv run python .\tests\claude-mcp-test.py
+
+# 8) ★ DeepSeek Harness (DSH) MCP compatibility (generates cordis config block + dsh-mcp-client-style handshake)
+uv run python .\tests\dsh-mcp-test.py
 ```
 
 **Test suite coverage** (`test-suite.py`, 85 cases): handshake 5 (incl. capabilities subscribe/logging/completions) · tools 37 (negative numbers / decimals / special characters / 10KB long text / unknown tool / missing args / isError / data integrity / 4 MES cases / 2 structuredContent cases) · prompts 5 · resources 6 · security 3 (path traversal / absolute path / illegal extension) · raw protocol 29 (invalid JSON / unknown method / notification without response / id types / CRLF / completion / logging / subscribe / error recovery / version-negotiation edges / cursor / initialize tolerance). **The raw-protocol cases catch bugs the official SDK client cannot** (e.g. string ids without quotes, `\uXXXX` escape parsing) — they have already surfaced and fixed framework bugs twice. MES cases depend on the intranet server 192.168.20.151 (see the tutorial doc); they fail when it is unreachable.
