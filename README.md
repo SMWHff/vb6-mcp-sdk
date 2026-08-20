@@ -24,7 +24,7 @@
 - 🔤 **中文友好**：UTF-8 全链路编解码，工具名用 ASCII、描述与结果可中文
 - 🛡️ **错误语义**：工具抛错自动转 `isError` 结果、缺参自动校验（-32602），AI 端可见错误文本
 - 📦 **零依赖**：仅 VB6 + Win32 API + 纯 VB6 JSON 库（VBJSON），无任何第三方 VB6 控件
-- 🧪 **可测试**：65 用例 stdio 测试套件 + 28 项 HTTP 专项，官方 Python SDK 双传输验证
+- 🧪 **可测试**：69 用例 stdio 测试套件 + 28 项 HTTP 专项，官方 Python SDK 双传输验证
 
 ---
 
@@ -53,6 +53,7 @@ vb6-mcp-sdk\
 │   ├── ToolRand.cls            ← 示例工具：随机整数（演示数字参数/边界校验）
 │   ├── ToolText.cls            ← 示例工具：字符串处理（枚举参数 upper/lower/trim/reverse）
 │   ├── ToolEnv.cls             ← 示例工具：环境变量查询（可选默认值）
+│   ├── ToolMes.cls             ← MES 开放 API 工具（18 个接口：SN/MAC/料号/工单/治具/烧录文件，见教程文档）
 │   ├── SamplePrompt.cls        ← 示例提示词（代码审查助手）
 │   ├── SampleTranslate.cls     ← 示例提示词（翻译助手）
 │   ├── SampleResource.cls      ← 示例资源（服务器信息）
@@ -68,7 +69,7 @@ vb6-mcp-sdk\
 │   └── utf8-to-gbk.ps1         ← VB6 源码 UTF-8（含 BOM）转 GBK，防中文乱码
 └── tests\                      ← 测试用例
     ├── test.ps1                ← stdio 冒烟测试
-    ├── test-suite.py           ← ★ stdio 全面测试套件（65 用例）
+    ├── test-suite.py           ← ★ stdio 全面测试套件（69 用例）
     ├── http-test.py            ← ★ HTTP 传输层专项（28 项：会话/边界/三能力全链路）
     ├── coverage.py             ← ★ 测试用例覆盖率自动统计（工具/提示词/资源/模板/协议方法）
     ├── coverage-whitebox.py    ← ★ 白盒覆盖率自动统计（VB6 源码过程级调用图分析）
@@ -305,7 +306,7 @@ End Sub
 # 1) 冒烟测试（stdio，5 条消息）
 pwsh .\tests\test.ps1
 
-# 2) ★ 全面测试套件（stdio，65 用例：握手/工具/提示词/资源/模板/安全/裸协议/边界/数据完整性）
+# 2) ★ 全面测试套件（stdio，69 用例：握手/工具/提示词/资源/模板/安全/裸协议/边界/数据完整性/MES）
 uv run --with mcp python .\tests\test-suite.py
 
 # 3) ★ HTTP 传输层专项（28 项：CORS/202/404/OPTIONS/中文/缺参/会话/边界/三能力全链路）
@@ -322,7 +323,7 @@ uv run --with mcp python .\tests\client-sdk-http.py http://localhost:9000/mcp
 npx @modelcontextprotocol/inspector .\vb6-mcp-sdk.exe
 ```
 
-**测试套件覆盖**（`test-suite.py` 65 用例）：握手 4 · 工具 31（含负数/小数/特殊字符/10KB 长文本/未知工具/缺参/isError/数据完整性）· 提示词 5 · 资源 6 · 安全 3（路径穿越/绝对路径/非法扩展名）· 裸协议 16（非法 JSON/未知方法/通知无响应/字符串 id/数字 id/CRLF）。**裸协议用例能抓到官方 SDK 客户端测不出的问题**（如字符串 id 不带引号、`\uXXXX` 转义解析）——已两次真实发现并修复框架 bug。
+**测试套件覆盖**（`test-suite.py` 69 用例）：握手 4 · 工具 35（含负数/小数/特殊字符/10KB 长文本/未知工具/缺参/isError/数据完整性/MES 4 例）· 提示词 5 · 资源 6 · 安全 3（路径穿越/绝对路径/非法扩展名）· 裸协议 16（非法 JSON/未知方法/通知无响应/字符串 id/数字 id/CRLF）。**裸协议用例能抓到官方 SDK 客户端测不出的问题**（如字符串 id 不带引号、`\uXXXX` 转义解析）——已两次真实发现并修复框架 bug。MES 用例依赖内网服务器 192.168.20.151（接口见教程文档），不可达时对应用例会报失败。
 
 ---
 

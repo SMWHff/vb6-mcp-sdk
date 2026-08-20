@@ -26,6 +26,7 @@ Class=ToolEnv; tools\ToolEnv.cls
 Class=ToolText; tools\ToolText.cls
 Class=cStringBuilder; sdk\json\cStringBuilder.cls
 Class=ToolJsonBuild; tools\ToolJsonBuild.cls
+Class=ToolMes; tools\ToolMes.cls
 Startup="Sub Main"
 ExeName32="vb6-mcp-sdk.exe"
 Command32=""

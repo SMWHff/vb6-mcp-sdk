@@ -50,8 +50,14 @@ vb6-mcp-sdk\
 │   ├── ToolSysInfo.cls         ← Example tool: system info (Windows API)
 │   ├── ToolReadFile.cls        ← Example tool: whitelist-secured file reading
 │   ├── ToolWordCount.cls       ← Example tool: text statistics (demonstrates isError)
-│   ├── SamplePrompt.cls\n│   ├── SampleTranslate.cls        ← Example prompt (code review assistant)
-│   └── SampleResource.cls      ← Example resource (server info)
+│   ├── ToolRand.cls            ← Example tool: random integers (numeric args / bounds)
+│   ├── ToolText.cls            ← Example tool: string ops (enum upper/lower/trim/reverse)
+│   ├── ToolEnv.cls             ← Example tool: environment variable (optional default)
+│   ├── ToolMes.cls             ← MES open API tool (18 endpoints: SN/MAC/item/work order/jig/firmware)
+│   ├── SamplePrompt.cls        ← Example prompt (code review assistant)
+│   ├── SampleTranslate.cls     ← Example prompt (translation assistant)
+│   ├── SampleResource.cls      ← Example resource (server info)
+│   └── SampleTemplate.cls      ← Example resource template (demo://greet/{name})
 ├── mcp_main.bas                   ← Entry point: create server, register capabilities, start
 ├── vb6-mcp-sdk.vbp              ← Project file (double-click to open)
 ├── README.md                   ← 中文文档
@@ -61,7 +67,7 @@ vb6-mcp-sdk\
 │   └── fix-console.ps1         ← Must run after every compile (GUI→Console subsystem)
 └── tests\
     ├── test.ps1                ← stdio smoke test
-    ├── test-suite.py           ← ★ full stdio test suite (65 cases)
+    ├── test-suite.py           ← ★ full stdio test suite (69 cases)
     ├── http-test.py            ← ★ HTTP transport tests (28 checks)
     ├── coverage.py             ← ★ black-box coverage (tools/prompts/resources/templates/methods)
     ├── coverage-whitebox.py    ← ★ white-box coverage (VB6 source procedure-level call-graph)
@@ -297,7 +303,7 @@ Or run each test individually:
 # 1) Smoke test (stdio, 5 messages)
 pwsh .\tests\test.ps1
 
-# 2) ★ Full test suite (stdio, 65 cases: handshake/tools/prompts/resources/security/raw protocol errors)
+# 2) ★ Full test suite (stdio, 69 cases: handshake/tools/prompts/resources/security/raw protocol errors)
 uv run --with mcp python .\tests\test-suite.py
 
 # 3) ★ HTTP transport tests (28 checks: CORS/202/404/OPTIONS/Chinese/missing args)
@@ -314,7 +320,7 @@ uv run --with mcp python .\tests\client-sdk-http.py http://localhost:9000/mcp
 npx @modelcontextprotocol/inspector .\vb6-mcp-sdk.exe
 ```
 
-**Test suite coverage** (`test-suite.py`, 65 cases): handshake 4 · tools 31 (negative numbers / decimals / special characters / 10KB long text / unknown tool / missing args / isError / data integrity) · prompts 5 · resources 6 · security 3 (path traversal / absolute path / illegal extension) · raw protocol 16 (invalid JSON / unknown method / notification without response / string id / numeric id / CRLF). **The raw-protocol cases catch bugs the official SDK client cannot** (e.g. string ids without quotes, `\uXXXX` escape parsing) — they have already surfaced and fixed framework bugs twice.
+**Test suite coverage** (`test-suite.py`, 69 cases): handshake 4 · tools 35 (negative numbers / decimals / special characters / 10KB long text / unknown tool / missing args / isError / data integrity / 4 MES cases) · prompts 5 · resources 6 · security 3 (path traversal / absolute path / illegal extension) · raw protocol 16 (invalid JSON / unknown method / notification without response / string id / numeric id / CRLF). **The raw-protocol cases catch bugs the official SDK client cannot** (e.g. string ids without quotes, `\uXXXX` escape parsing) — they have already surfaced and fixed framework bugs twice. MES cases depend on the intranet server 192.168.20.151 (see the tutorial doc); they fail when it is unreachable.
 
 ---
 

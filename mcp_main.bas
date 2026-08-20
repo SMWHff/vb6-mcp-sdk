@@ -35,6 +35,7 @@ Public Sub Main()
     server.RegisterTool New ToolRand
     server.RegisterTool New ToolText
     server.RegisterTool New ToolEnv
+    server.RegisterTool New ToolMes
 
     ' ===== 启动（按命令行参数选传输）=====
     If LCase$(Command$) Like "*http*" Then

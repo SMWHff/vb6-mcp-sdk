@@ -48,7 +48,7 @@ async def sdk_session_cases():
             # ---- Tools ----
             tools = await session.list_tools()
             names = [t.name for t in tools.tools]
-            record("工具", "tools/list 返回 10 个工具", len(tools.tools) == 10, str(names))
+            record("工具", "tools/list 返回 11 个工具", len(tools.tools) == 11, str(names))
             record("工具", "工具字段完整",
                    all(t.name and t.description and t.input_schema.get("type") == "object" for t in tools.tools))
 
@@ -142,6 +142,18 @@ async def sdk_session_cases():
             record("工具", "getenv 存在变量", len(r.content[0].text) > 0, r.content[0].text[:20])
             r = await session.call_tool("getenv", {"name": "MCP_NO_SUCH_VAR_XYZ", "default": "fb"})
             record("工具", "getenv 默认值兜底", r.content[0].text == "fb", r.content[0].text)
+
+            # ---- MES 工具（依赖内网 MES 服务器 192.168.20.151，接口见教程文档）----
+            r = await session.call_tool("mes_query", {"field": "no_such_field", "pcb_seq": "BH08E901600001"})
+            record("工具", "mes_query 非法 field 拒绝", r.is_error is True, r.content[0].text[:40])
+            r = await session.call_tool("mes_query", {"field": "item_no", "pcb_seq": "BH08E901600001"})
+            record("工具", "mes_query 查询料号", (not r.is_error) and r.content[0].text.strip() == "9001001114",
+                   r.content[0].text[:40])
+            r = await session.call_tool("mes_query", {"field": "ITEMNO", "pcb_seq": "BH08E901600001"})
+            record("工具", "mes_query 原始 fieldName 透传",
+                   (not r.is_error) and r.content[0].text.strip() == "9001001114", r.content[0].text[:40])
+            r = await session.call_tool("mes_query", {"field": "set_mac", "pcb_seq": "BH08E901600001"})
+            record("工具", "mes_query set_mac 缺 value 拒绝", r.is_error is True, r.content[0].text[:40])
 
             # ---- Prompts ----
             prompts = await session.list_prompts()
