@@ -390,4 +390,4 @@ npx @modelcontextprotocol/inspector .\vb6-mcp-sdk.exe
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=SMWHff/vb6-mcp-sdk&type=Date)](https://star-history.com/#SMWHff/vb6-mcp-sdk&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=SMWHff/vb6-mcp-sdk&type=Date)](https://www.star-history.com/?repos=SMWHff%2Fvb6-mcp-sdk&type=timeline&logscale=&legend=top-left)
