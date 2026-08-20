@@ -168,7 +168,7 @@ Done:
 End Function
 
 ' Parse with per-message cache (HandleMessage + tool Execute share the same JSON text)
-Private Function ParseCached(ByVal s As String) As Object
+Public Function ParseCached(ByVal s As String) As Object
     s = StripBom(s)
     If s = m_cachedJson Then
         Set ParseCached = m_cachedObj

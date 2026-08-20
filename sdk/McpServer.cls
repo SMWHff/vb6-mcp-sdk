@@ -18,6 +18,7 @@ Option Explicit
 
 Private Const PROTOCOL_VERSION As String = "2024-11-05"   ' fallback
 ' Server-supported protocol revisions (highest first)
+Private Const PV_2025_11 As String = "2025-11-25"
 Private Const PV_2025_06 As String = "2025-06-18"
 Private Const PV_2025_03 As String = "2025-03-26"
 
@@ -30,8 +31,10 @@ Private m_prompts As Collection
 Private m_resources As Collection
 Private m_templates As Collection
 Private m_sessions As Collection
+Private m_subscriptions As Collection
 Private m_serverName As String
 Private m_serverVersion As String
+Private m_logLevel As String
 
 Private Sub Class_Initialize()
     Set m_tools = New Collection
@@ -39,6 +42,7 @@ Private Sub Class_Initialize()
     Set m_resources = New Collection
     Set m_templates = New Collection
     Set m_sessions = New Collection
+    Set m_subscriptions = New Collection
     m_serverName = "vb6-mcp-sdk"
     m_serverVersion = "1.0.0"
 End Sub
@@ -162,7 +166,7 @@ Public Function HandleMessage(ByVal json As String) As String
         selVer = SelectProtocolVersion(clientVer)
         HandleMessage = "{""jsonrpc"":""2.0"",""id"":" & idText & ",""result"":{" _
             & """protocolVersion"":""" & selVer & """," _
-            & """capabilities"":{""tools"":{""listChanged"":false},""prompts"":{},""resources"":{}}," _
+            & """capabilities"":{""tools"":{""listChanged"":false},""prompts"":{},""resources"":{""subscribe"":true},""logging"":{},""completions"":{}}," _
             & """serverInfo"":{""name"":""" & m_serverName & """,""version"":""" & m_serverVersion & """}}}"
 
     Case "ping"
@@ -188,6 +192,21 @@ Public Function HandleMessage(ByVal json As String) As String
 
     Case "resources/read"
         HandleMessage = ReadResourceValue(json, idText)
+
+    Case "completion/complete"
+        HandleMessage = CompleteArgument(json, idText)
+
+    Case "logging/setLevel"
+        m_logLevel = CStr(JsonGet(json, ".params.level"))
+        HandleMessage = "{""jsonrpc"":""2.0"",""id"":" & idText & ",""result"":{}}"
+
+    Case "resources/subscribe"
+        Call SubscribeUri(json)
+        HandleMessage = "{""jsonrpc"":""2.0"",""id"":" & idText & ",""result"":{}}"
+
+    Case "resources/unsubscribe"
+        Call UnsubscribeUri(json)
+        HandleMessage = "{""jsonrpc"":""2.0"",""id"":" & idText & ",""result"":{}}"
 
     Case Else
         HandleMessage = "{""jsonrpc"":""2.0"",""id"":" & idText & ",""error"":{""code"":-32601," _
@@ -231,8 +250,15 @@ Private Function CallTool(ByVal json As String, ByVal idText As String) As Strin
             End If
             Dim resultText As String
             resultText = t.Execute(json)
-            CallTool = "{""jsonrpc"":""2.0"",""id"":" & idText & ",""result"":{""content"":[" _
-                & "{""type"":""text"",""text"":" & JsonQuote(resultText) & "}]}}"
+            Dim sc As String
+            sc = TryStructured(resultText)
+            If Len(sc) > 0 Then
+                CallTool = "{""jsonrpc"":""2.0"",""id"":" & idText & ",""result"":{""content"":[" _
+                    & "{""type"":""text"",""text"":" & JsonQuote(resultText) & "}],""structuredContent"":" & sc & "}}"
+            Else
+                CallTool = "{""jsonrpc"":""2.0"",""id"":" & idText & ",""result"":{""content"":[" _
+                    & "{""type"":""text"",""text"":" & JsonQuote(resultText) & "}]}}"
+            End If
             Exit Function
         End If
     Next t
@@ -368,6 +394,8 @@ Private Sub HandleHttpConnection(ByVal conn As Long)
         Else
             Call HttpSendAcceptedWithSession(conn, newSess)
         End If
+    ElseIf method = "GET" And path = "/mcp" Then
+        Call HttpSendSse(conn)
     ElseIf method = "GET" Then
         Call HttpSendJson(conn, "{""name"":""" & m_serverName & """,""mode"":""streamable-http"",""endpoint"":""/mcp""}")
     Else
@@ -417,7 +445,9 @@ End Function
 
 ' 协议版本协商：返回服务器支持的、不超过客户端版本的最高版本
 Private Function SelectProtocolVersion(ByVal clientVer As String) As String
-    If clientVer >= PV_2025_06 Then
+    If clientVer >= PV_2025_11 Then
+        SelectProtocolVersion = PV_2025_11
+    ElseIf clientVer >= PV_2025_06 Then
         SelectProtocolVersion = PV_2025_06
     ElseIf clientVer >= PV_2025_03 Then
         SelectProtocolVersion = PV_2025_03
@@ -453,3 +483,59 @@ Private Sub RemoveSession(ByVal id As String)
         End If
     Next i
 End Sub
+' ===================== Completions / Subscriptions / Structured =====================
+
+' 参数补全（completion/complete）：提示词 language 参数给出常见语言，其余返回空
+Private Function CompleteArgument(ByVal json As String, ByVal idText As String) As String
+    Dim refType As String
+    refType = CStr(JsonGet(json, ".params.ref.type"))
+    Dim argName As String
+    argName = CStr(JsonGet(json, ".params.argumentName"))
+    Dim values As String
+    values = ""
+    If LCase$(refType) = "ref/prompt" And LCase$(argName) = "language" Then
+        values = JsonQuote("VB6") & "," & JsonQuote("Python") & "," & JsonQuote("C#") _
+            & "," & JsonQuote("Java") & "," & JsonQuote("Go") & "," & JsonQuote("JavaScript")
+    End If
+    CompleteArgument = "{""jsonrpc"":""2.0"",""id"":" & idText & ",""result"":{""completion"":{""values"":[" _
+        & values & "],""hasMore"":false}}}"
+End Function
+
+' 资源订阅（幂等）：记录 uri，资源变化时可推送 notifications/resources/updated
+Private Sub SubscribeUri(ByVal json As String)
+    Dim uri As String
+    uri = CStr(JsonGet(json, ".params.uri"))
+    If Len(uri) = 0 Then Exit Sub
+    Dim s As Variant
+    For Each s In m_subscriptions
+        If CStr(s) = uri Then Exit Sub
+    Next s
+    m_subscriptions.Add uri
+End Sub
+
+' 资源退订
+Private Sub UnsubscribeUri(ByVal json As String)
+    Dim uri As String
+    uri = CStr(JsonGet(json, ".params.uri"))
+    Dim i As Long
+    For i = m_subscriptions.Count To 1 Step -1
+        If CStr(m_subscriptions(i)) = uri Then
+            m_subscriptions.Remove i
+            Exit Sub
+        End If
+    Next i
+End Sub
+
+' 若工具返回文本是合法 JSON 对象/数组，同时作为 structuredContent 输出（2025-03-26+）
+Private Function TryStructured(ByVal s As String) As String
+    On Error GoTo NotJson
+    Dim t As String
+    t = Trim$(s)
+    If Left$(t, 1) = "{" Or Left$(t, 1) = "[" Then
+        Dim o As Object
+        Set o = ParseCached(t)
+        TryStructured = t
+    End If
+NotJson:
+End Function
+

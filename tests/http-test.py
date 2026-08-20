@@ -81,6 +81,13 @@ def main():
     status, _, body = get("/")
     check("GET / 健康检查 -> 200", status == 200 and "streamable-http" in body, f"{status} {body[:60]}")
 
+    # 6b. GET /mcp -> SSE 流（2025-06-18 Streamable HTTP 要求）
+    status, headers, body = get("/mcp")
+    check("GET /mcp -> 200", status == 200, status)
+    check("GET /mcp Content-Type: text/event-stream",
+          "text/event-stream" in headers.get("Content-Type", ""), headers.get("Content-Type"))
+    check("GET /mcp 含 endpoint 事件", "event: endpoint" in body and "data: /mcp" in body, body[:60])
+
     # 7. 未知路径 -> 404
     status, _, _ = post("/wrong", json.dumps({"jsonrpc": "2.0", "id": 1, "method": "ping"}))
     check("POST 未知路径 -> 404", status == 404, status)

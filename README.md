@@ -18,13 +18,13 @@
 
 ## 特性
 
-- 🧩 **协议引擎**：完整 JSON-RPC 2.0 + MCP 生命周期（initialize / notifications / ping），**协议版本协商**（支持 2024-11-05 / 2025-03-26 / 2025-06-18）
+- 🧩 **协议引擎**：完整 JSON-RPC 2.0 + MCP 生命周期（initialize / notifications / ping），**协议版本协商**（支持 2024-11-05 / 2025-03-26 / 2025-06-18 / 2025-11-25），含 **completion/complete 参数补全、logging/setLevel、resources 订阅、structuredContent 结构化结果**
 - 🔌 **双传输**：stdio（被 Claude Desktop / Cursor 等拉起）与 Streamable HTTP（Winsock 自实现，零第三方依赖）
 - 🧰 **四大能力**：Tools / Prompts / Resources / **Resource Templates** 全覆盖，实现接口 + 注册即用
 - 🔤 **中文友好**：UTF-8 全链路编解码，工具名用 ASCII、描述与结果可中文
 - 🛡️ **错误语义**：工具抛错自动转 `isError` 结果、缺参自动校验（-32602），AI 端可见错误文本
 - 📦 **零依赖**：仅 VB6 + Win32 API + 纯 VB6 JSON 库（VBJSON），无任何第三方 VB6 控件
-- 🧪 **可测试**：69 用例 stdio 测试套件 + 28 项 HTTP 专项，官方 Python SDK 双传输验证
+- 🧪 **可测试**：75 用例 stdio 测试套件 + 31 项 HTTP 专项，官方 Python SDK 双传输验证
 
 ---
 
@@ -69,8 +69,8 @@ vb6-mcp-sdk\
 │   └── utf8-to-gbk.ps1         ← VB6 源码 UTF-8（含 BOM）转 GBK，防中文乱码
 └── tests\                      ← 测试用例
     ├── test.ps1                ← stdio 冒烟测试
-    ├── test-suite.py           ← ★ stdio 全面测试套件（69 用例）
-    ├── http-test.py            ← ★ HTTP 传输层专项（28 项：会话/边界/三能力全链路）
+    ├── test-suite.py           ← ★ stdio 全面测试套件（75 用例）
+    ├── http-test.py            ← ★ HTTP 传输层专项（31 项：会话/边界/三能力全链路/SSE）
     ├── coverage.py             ← ★ 测试用例覆盖率自动统计（工具/提示词/资源/模板/协议方法）
     ├── coverage-whitebox.py    ← ★ 白盒覆盖率自动统计（VB6 源码过程级调用图，仅自研代码，VBJSON 第三方库排除）
     ├── client-sdk.py           ← 官方 Python SDK 握手（stdio）
@@ -306,10 +306,10 @@ End Sub
 # 1) 冒烟测试（stdio，5 条消息）
 pwsh .\tests\test.ps1
 
-# 2) ★ 全面测试套件（stdio，69 用例：握手/工具/提示词/资源/模板/安全/裸协议/边界/数据完整性/MES）
+# 2) ★ 全面测试套件（stdio，75 用例：握手/工具/提示词/资源/模板/安全/裸协议/边界/数据完整性/MES/协议扩展）
 uv run --with mcp python .\tests\test-suite.py
 
-# 3) ★ HTTP 传输层专项（28 项：CORS/202/404/OPTIONS/中文/缺参/会话/边界/三能力全链路）
+# 3) ★ HTTP 传输层专项（31 项：CORS/202/404/OPTIONS/中文/缺参/会话/边界/三能力全链路/GET-SSE）
 #    先启动：.\vb6-mcp-sdk.exe /http:9002
 uv run python .\tests\http-test.py http://localhost:9002/mcp
 
@@ -323,7 +323,7 @@ uv run --with mcp python .\tests\client-sdk-http.py http://localhost:9000/mcp
 npx @modelcontextprotocol/inspector .\vb6-mcp-sdk.exe
 ```
 
-**测试套件覆盖**（`test-suite.py` 69 用例）：握手 4 · 工具 35（含负数/小数/特殊字符/10KB 长文本/未知工具/缺参/isError/数据完整性/MES 4 例）· 提示词 5 · 资源 6 · 安全 3（路径穿越/绝对路径/非法扩展名）· 裸协议 16（非法 JSON/未知方法/通知无响应/字符串 id/数字 id/CRLF）。**裸协议用例能抓到官方 SDK 客户端测不出的问题**（如字符串 id 不带引号、`\uXXXX` 转义解析）——已两次真实发现并修复框架 bug。MES 用例依赖内网服务器 192.168.20.151（接口见教程文档），不可达时对应用例会报失败。
+**测试套件覆盖**（`test-suite.py` 75 用例）：握手 5（含 capabilities 订阅/日志/补全声明）· 工具 37（含负数/小数/特殊字符/10KB 长文本/未知工具/缺参/isError/数据完整性/MES 4 例/structuredContent 2 例）· 提示词 5 · 资源 6 · 安全 3（路径穿越/绝对路径/非法扩展名）· 裸协议 19（非法 JSON/未知方法/通知无响应/字符串 id/数字 id/CRLF/补全/日志/订阅）。**裸协议用例能抓到官方 SDK 客户端测不出的问题**（如字符串 id 不带引号、`\uXXXX` 转义解析）——已两次真实发现并修复框架 bug。MES 用例依赖内网服务器 192.168.20.151（接口见教程文档），不可达时对应用例会报失败。
 
 ---
 
@@ -388,7 +388,7 @@ npx @modelcontextprotocol/inspector .\vb6-mcp-sdk.exe
 仓库：[github.com/SMWHff/vb6-mcp-sdk](https://github.com/SMWHff/vb6-mcp-sdk) —— 觉得有用的话欢迎 ⭐ Star、提 [Issue](https://github.com/SMWHff/vb6-mcp-sdk/issues) 或发 [PR](https://github.com/SMWHff/vb6-mcp-sdk/pulls)。
 
 - **许可证**：MIT（见 `LICENSE`）
-- **版本**：1.0.0（协议 2024-11-05，兼容 2025-03-26 / 2025-06-18 客户端）
+- **版本**：1.0.0（协议 2024-11-05，兼容 2025-03-26 / 2025-06-18 / 2025-11-25 客户端）
 - **技术栈**：VB6（32 位）+ Win32 API + VBJSON（纯 VB6 JSON 库）——无任何第三方 VB6 控件依赖
 - **贡献方式**：
   - 新增示例工具：实现 `ITool` / `IPrompt` / `IResource` / `ITemplate` 接口，参考 `tools/` 下的模板

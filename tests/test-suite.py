@@ -34,7 +34,8 @@ async def sdk_session_cases():
         async with ClientSession(read, write) as session:
             init = await session.initialize()
             record("握手", "initialize 协议版本协商",
-                   init.protocol_version in ("2024-11-05", "2025-03-26", "2025-06-18"), init.protocol_version)
+                   init.protocol_version in ("2024-11-05", "2025-03-26", "2025-06-18", "2025-11-25"),
+                   init.protocol_version)
             record("握手", "serverInfo 名称与版本",
                    init.server_info.name == "vb6-mcp-sdk-demo" and init.server_info.version == "1.0.0",
                    f"{init.server_info.name} {init.server_info.version}")
@@ -42,6 +43,10 @@ async def sdk_session_cases():
             record("握手", "capabilities 含三大能力",
                    caps.tools is not None and caps.prompts is not None and caps.resources is not None,
                    str(caps))
+            record("握手", "capabilities 含订阅/日志/补全",
+                   getattr(caps.resources, "subscribe", False) is True
+                   and getattr(caps, "logging", None) is not None
+                   and getattr(caps, "completions", None) is not None, str(caps))
             await session.send_ping()
             record("握手", "ping 成功", True)
 
@@ -142,6 +147,15 @@ async def sdk_session_cases():
             record("工具", "getenv 存在变量", len(r.content[0].text) > 0, r.content[0].text[:20])
             r = await session.call_tool("getenv", {"name": "MCP_NO_SUCH_VAR_XYZ", "default": "fb"})
             record("工具", "getenv 默认值兜底", r.content[0].text == "fb", r.content[0].text)
+
+            # ---- 结构化结果（structuredContent，2025-03-26+）----
+            r = await session.call_tool("json_build", {"mode": "full"})
+            sc = r.structured_content
+            record("工具", "structuredContent 结构化结果",
+                   isinstance(sc, dict) and sc.get("name") == "vb6" and sc.get("count") == 3, str(sc)[:80])
+            r = await session.call_tool("echo", {"text": "plain"})
+            record("工具", "非 JSON 文本无 structuredContent", r.structured_content is None,
+                   str(r.structured_content)[:40])
 
             # ---- MES 工具（依赖内网 MES 服务器 192.168.20.151，接口见教程文档）----
             r = await session.call_tool("mes_query", {"field": "no_such_field", "pcb_seq": "BH08E901600001"})
@@ -283,6 +297,21 @@ def raw_cases():
 
     out = raw_run(['{"jsonrpc":"2.0","id":999999999999,"method":"ping"}'])
     record("裸协议", "超大 id 回显", any('"id":999999999999' in o for o in out), str(out))
+
+    # ---- 协议扩展端点（2025-06-18+：补全/日志/订阅）----
+    out = raw_run(['{"jsonrpc":"2.0","id":40,"method":"completion/complete",'
+                   '"params":{"ref":{"type":"ref/prompt","name":"code_review"},'
+                   '"argumentName":"language","arguments":{}}}'])
+    record("裸协议", "completion/complete 补全语言", any('"VB6"' in o and "hasMore" in o for o in out), str(out))
+
+    out = raw_run(['{"jsonrpc":"2.0","id":41,"method":"logging/setLevel","params":{"level":"debug"}}'])
+    record("裸协议", "logging/setLevel 成功", any('"id":41' in o and '"result":{}' in o for o in out), str(out))
+
+    out = raw_run(['{"jsonrpc":"2.0","id":42,"method":"resources/subscribe","params":{"uri":"demo://server/info"}}',
+                   '{"jsonrpc":"2.0","id":43,"method":"resources/unsubscribe","params":{"uri":"demo://server/info"}}'])
+    record("裸协议", "resources/subscribe+unsubscribe",
+           any('"id":42' in o and '"result":{}' in o for o in out)
+           and any('"id":43' in o and '"result":{}' in o for o in out), str(out))
 
 
 # ==================== 汇总 ====================

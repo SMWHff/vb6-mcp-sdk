@@ -220,6 +220,12 @@ Private Function GetHeaderText(ByVal head As String, ByVal name As String) As St
     GetHeaderText = Trim$(line)
 End Function
 ' 发送 204（DELETE 关会话成功）
+Public Function HttpSendSse(ByVal conn As Long) As Long
+    Dim body As String
+    body = "event: endpoint" & vbCrLf & "data: /mcp" & vbCrLf & vbCrLf
+    HttpSendSse = HttpSendRaw(conn, 200, "OK", "text/event-stream", body)
+End Function
+
 Public Function HttpSendNoContent(ByVal conn As Long) As Long
     HttpSendNoContent = HttpSendRaw(conn, 204, "No Content", "", "")
 End Function

@@ -67,6 +67,10 @@ def scan_sources():
         (r'read_resource\(', "resources/read"),
         (r'list_resource_templates\(', "resources/templates/list"),
         (r'notifications/', "notifications"),
+        (r'"method":"completion/complete"', "completion/complete"),
+        (r'"method":"logging/setLevel"', "logging/setLevel"),
+        (r'"method":"resources/subscribe"', "resources/subscribe"),
+        (r'"method":"resources/unsubscribe"', "resources/unsubscribe"),
     ]:
         if re.search(pat, text):
             methods.add(name)
@@ -94,6 +98,8 @@ def main():
         "initialize", "ping", "tools/list", "tools/call",
         "prompts/list", "prompts/get", "resources/list", "resources/read",
         "resources/templates/list", "notifications",
+        "completion/complete", "logging/setLevel",
+        "resources/subscribe", "resources/unsubscribe",
     ]
 
     t_miss = [t for t in tools if t not in c_tools]
