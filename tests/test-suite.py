@@ -66,6 +66,13 @@ async def sdk_session_cases():
             r = await session.call_tool("echo", {"text": big})
             record("工具", "echo 长文本 10KB", len(r.content[0].text) == 5000, len(r.content[0].text))
 
+            r = await session.call_tool("echo", {"text": "你好👋😀🚀"})
+            record("工具", "echo emoji 4字节Unicode", r.content[0].text == "你好👋😀🚀", r.content[0].text[:20])
+            r = await session.call_tool("echo", {"text": ""})
+            record("工具", "echo 空字符串", r.content[0].text == "", repr(r.content[0].text))
+            r = await session.call_tool("echo", {"text": "a" * 100000})
+            record("工具", "echo 100KB 大文本", len(r.content[0].text) == 100000, len(r.content[0].text))
+
             r = await session.call_tool("get_time", {})
             record("工具", "get_time 格式", bool(re.match(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$", r.content[0].text)),
                    r.content[0].text)
@@ -151,6 +158,12 @@ async def sdk_session_cases():
             record("资源", "templates/list 含 greet 模板", "demo://greet/{name}" in tpl_uris, str(tpl_uris))
             rt = await session.read_resource("demo://greet/张三")
             record("资源", "模板 read 动态解析", "你好，张三！" in rt.contents[0].text, rt.contents[0].text)
+
+            try:
+                await session.read_resource("demo://other/1")
+                record("资源", "模板不匹配 -> 未知资源", False, "未报错")
+            except MCPError as e:
+                record("资源", "模板不匹配 -> 未知资源", e.code == -32602, f"code={e.code}")
 
             try:
                 await session.read_resource("demo://no/such")

@@ -130,6 +130,23 @@ def main():
     except urllib.error.HTTPError as e:
         check("HEAD -> 404", e.code == 404, e.code)
 
+    # 12. 三大能力全链路（HTTP 层）
+    status, _, body = post("/mcp", json.dumps({"jsonrpc": "2.0", "id": 20, "method": "prompts/list"}))
+    check("HTTP prompts/list", status == 200 and "code_review" in body, status)
+    status, _, body = post("/mcp", json.dumps({"jsonrpc": "2.0", "id": 21, "method": "prompts/get",
+                                               "params": {"name": "code_review", "arguments": {"language": "VB6", "code": "x"}}}))
+    check("HTTP prompts/get", status == 200 and "VB6" in body, status)
+    status, _, body = post("/mcp", json.dumps({"jsonrpc": "2.0", "id": 22, "method": "resources/list"}))
+    check("HTTP resources/list", status == 200 and "demo://server/info" in body, status)
+    status, _, body = post("/mcp", json.dumps({"jsonrpc": "2.0", "id": 23, "method": "resources/read",
+                                               "params": {"uri": "demo://server/info"}}))
+    check("HTTP resources/read", status == 200 and "vb6-mcp-sdk-demo" in body, status)
+    status, _, body = post("/mcp", json.dumps({"jsonrpc": "2.0", "id": 24, "method": "resources/templates/list"}))
+    check("HTTP templates/list", status == 200 and "demo://greet/{name}" in body, status)
+    status, _, body = post("/mcp", json.dumps({"jsonrpc": "2.0", "id": 25, "method": "resources/read",
+                                               "params": {"uri": "demo://greet/测试"}}))
+    check("HTTP 模板 read", status == 200 and "你好" in body, status)
+
     print("\n" + "=" * 56)
     print(f"结果: {PASS}/{PASS + len(FAIL)} 通过")
     for name, detail in FAIL:
